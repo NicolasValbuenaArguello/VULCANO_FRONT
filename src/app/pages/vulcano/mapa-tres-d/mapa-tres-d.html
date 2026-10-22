@@ -1,0 +1,81 @@
+<div
+  #mapContainer
+  class="mapa-3d-container"
+  aria-label="Globo geografico interactivo"
+></div>
+
+@if (baselineDiagnosticVisible) {
+  <div
+    #terrainBaselineContainer
+    class="terrain-baseline-container"
+    aria-label="Control baseline de MapLibre"
+  ></div>
+}
+
+@if (demDebugVisible) {
+  <div class="dem-debug-panel">
+    <div class="dem-debug-panel__title">
+      <strong>DIAGNOSTICO TERRAIN</strong>
+    </div>
+
+    <div class="dem-debug-panel__status">
+      <div><strong>Etapa:</strong> {{ demDiagnosticCurrentStage }}</div>
+      <div><strong>Diagnostico terrain:</strong> {{ demDiagnosticProgress }}%</div>
+    </div>
+
+    <div class="dem-debug-panel__actions">
+      <button type="button" [disabled]="diagnosticRunning" (click)="probarTerrainOficial()">1. DEM OFICIAL</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="probarTerrainStyleCompleto()">2. STYLE OFICIAL</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="probarDemLocalAislado()">3. DEM LOCAL</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="probarDecodificacionTileDem()">4. VALIDAR PNG</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="ejecutarDiagnosticoTerrainCompleto()">EJECUTAR TODO</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="mostrarBaselineDiagnostic()">ABRIR BASELINE</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="copiarResultado()">COPIAR RESULTADO</button>
+      <button type="button" [disabled]="diagnosticRunning" (click)="restaurarMapaNormal()">RESTAURAR</button>
+    </div>
+
+    <div class="dem-debug-panel__conclusion">
+      {{ demDiagnosticConclusion }}
+    </div>
+
+    <pre>{{ demDiagnosticText }}</pre>
+  </div>
+}
+
+@if (baselineDiagnosticVisible) {
+  <div class="baseline-debug-panel">
+    <div class="baseline-debug-panel__title">
+      <strong>BASELINE MAPLIBRE 6.3.0</strong>
+    </div>
+
+    <div class="baseline-debug-panel__status">
+      <div><strong>Etapa:</strong> {{ baselineDiagnosticCurrentStage }}</div>
+      <div><strong>Baseline:</strong> {{ baselineDiagnosticProgress }}%</div>
+    </div>
+
+    <div class="baseline-debug-panel__actions">
+      <button type="button" [disabled]="baselineDiagnosticRunning" (click)="probarBaselineMapLibre()">ABRIR BASELINE OFICIAL</button>
+      <button type="button" [disabled]="baselineDiagnosticRunning" (click)="probarBaselineLocalMapLibre()">ABRIR BASELINE LOCAL</button>
+      <button type="button" [disabled]="baselineDiagnosticRunning" (click)="copiarBaselineResultado()">COPIAR BASELINE</button>
+      <button type="button" [disabled]="baselineDiagnosticRunning" (click)="cerrarBaselineDiagnostic()">CERRAR BASELINE</button>
+    </div>
+
+    <div class="baseline-debug-panel__conclusion">
+      {{ baselineDiagnosticConclusion }}
+    </div>
+
+    <pre>{{ baselineDiagnosticText }}</pre>
+  </div>
+}
+
+@if (loading) {
+  <div class="mapa-3d-status mapa-3d-status--loading" aria-live="polite">
+    Cargando globo 3D...
+  </div>
+}
+
+@if (mapError) {
+  <div class="mapa-3d-status mapa-3d-status--error" role="alert">
+    {{ mapError }}
+  </div>
+}

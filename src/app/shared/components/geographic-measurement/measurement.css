@@ -1,0 +1,17 @@
+app-measurement-tools { position: absolute; inset: 0; z-index: 850; pointer-events: none; font: 11px/1.4 Consolas, monospace; color: #b5a359; }
+.geo-tools { position: absolute; top: 110px; left: 10px; max-width: calc(100% - 20px); pointer-events: auto; }
+.geo-tools button { border: 1px solid #53602a; border-radius: 4px; background: #17200a; color: #b5a359; font: inherit; cursor: pointer; min-height: 32px; padding: 5px 9px; text-align: left; }
+.geo-tools button:hover { background: #2a3511; }
+.geo-tools button:focus-visible { outline: 2px solid #9daa55; outline-offset: 2px; }
+.geo-tools-panel { display: grid; gap: 5px; margin-top: 5px; width: 255px; max-width: 100%; max-height: min(460px, var(--geo-panel-height, calc(100dvh - 240px))); overflow: auto; overscroll-behavior: contain; padding: 10px; border: 1px solid #53602a; border-radius: 7px; background: #090e02; box-shadow: 0 8px 24px #0008; }
+.geo-tools-panel strong { color: #9daa55; font-size: 10px; letter-spacing: .06em; }
+.geo-tools .geo-tool-active { color: #49c979; border-color: #49c979; }
+.geo-tools-panel p { margin: 4px 0; font-size: 10px; color: #b5a359; }
+.geo-cursor { position: absolute; bottom: 28px; left: 10px; display: grid; gap: 2px; max-width: calc(100% - 20px); padding: 5px 8px; border: 1px solid #303817; border-radius: 4px; background: #090e02ed; font-size: 10px; pointer-events: none; }
+.geo-result { border-top: 1px solid #303817; padding-top: 8px; }
+.geo-tools button:disabled { opacity: .5; cursor: default; }
+.geo-profile { width: 100%; height: auto; aspect-ratio: 300 / 140; }
+.geo-profile text { fill: #b5a359; font: 10px Consolas, monospace; }
+.geo-measurement-label { display: inline-block; width: max-content; max-width: 180px; padding: 2px 5px; border: 1px solid #53602a; border-radius: 3px; color: #b5a359; background: #090e02e8; font: 10px/1.4 Consolas, monospace; pointer-events: none !important; }
+.geo-measurement-marker { pointer-events: none !important; }
+@media (max-height: 500px) { .geo-tools { top: 105px; } .geo-tools-panel { max-height: calc(100dvh - 210px); } .geo-cursor { font-size: 9px; } }

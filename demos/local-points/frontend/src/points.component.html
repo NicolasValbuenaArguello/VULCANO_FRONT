@@ -1,0 +1,36 @@
+<main>
+  <header><p class="eyebrow">PRUEBA TÉCNICA INDEPENDIENTE</p><h1>Puntos locales</h1><p>Coordenadas cartesianas ficticias, sin referencia geográfica. Persistencia JSON local.</p></header>
+  <div class="messages" aria-live="polite">
+    @if (busy()) { <p role="status">Procesando…</p> }
+    @if (success()) { <p class="success" role="status">{{ success() }}</p> }
+    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  </div>
+  <section class="layout" [attr.aria-busy]="busy()">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <h2>{{ editingId() ? 'Editar punto' : 'Nuevo punto' }}</h2>
+      <fieldset [disabled]="busy()">
+        <label for="name">Nombre *</label><input id="name" formControlName="name" maxlength="100" autocomplete="off">
+        @if (form.controls.name.touched && form.controls.name.invalid) { <small class="error">Escribe un nombre de hasta 100 caracteres.</small> }
+        <div class="coordinates">
+          <div><label for="x">X local *</label><input id="x" type="number" step="any" formControlName="x"></div>
+          <div><label for="y">Y local *</label><input id="y" type="number" step="any" formControlName="y"></div>
+        </div>
+        @if ((form.controls.x.touched && form.controls.x.invalid) || (form.controls.y.touched && form.controls.y.invalid)) { <small class="error">X e Y requieren números finitos. Se admite cero.</small> }
+        <label for="description">Descripción</label><textarea id="description" formControlName="description" maxlength="1000" rows="4"></textarea>
+        <div class="actions"><button type="submit">{{ editingId() ? 'Guardar cambios' : 'Crear punto' }}</button>@if (editingId()) { <button type="button" class="secondary" (click)="cancelEdit()">Cancelar edición</button> }</div>
+      </fieldset>
+    </form>
+    <section class="records" aria-labelledby="records-title">
+      <div class="list-header"><h2 id="records-title">Registros ({{ points().length }})</h2><button type="button" class="secondary" [disabled]="busy()" (click)="load()">Actualizar listado</button></div>
+      @if (deleting(); as point) {
+        <div class="confirmation" role="group" aria-label="Confirmar eliminación"><p>¿Eliminar «{{ point.name }}»?</p><div class="actions"><button type="button" [disabled]="busy()" (click)="confirmDelete()">Confirmar eliminación</button><button type="button" class="secondary" [disabled]="busy()" (click)="deleting.set(null)">Cancelar</button></div></div>
+      }
+      @if (points().length === 0 && !busy()) { <p>No hay registros cargados.</p> }
+      <ul>
+        @for (point of points(); track point.id) {
+          <li><h3>{{ point.name }}</h3><p class="coordinates-value">X: {{ point.x }} · Y: {{ point.y }}</p><p>{{ point.description }}</p><dl><dt>ID</dt><dd>{{ point.id }}</dd><dt>Creado</dt><dd>{{ point.created_at | date:'medium' }}</dd></dl><div class="actions"><button type="button" class="secondary" [disabled]="busy()" (click)="edit(point)">Editar</button><button type="button" class="secondary danger" [disabled]="busy()" (click)="deleting.set(point)">Eliminar</button></div></li>
+        }
+      </ul>
+    </section>
+  </section>
+</main>

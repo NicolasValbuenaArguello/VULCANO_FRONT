@@ -1,0 +1,101 @@
+<nav class="menu-container" aria-label="Menú principal">
+  @for (item of menuItems; track item.id) {
+    <button
+      type="button"
+      class="menu-item"
+      [class.menu-item--active]="item.action === 'cambiar_ventana' && ((item.id === 4 && vistaActiva === '3d') || (item.id === 5 && vistaActiva === '2d') || (item.id === 6 && vistaActiva === 'hoja-milimetrada'))"
+      (click)="onMenuClick(item)"
+    >
+      {{ item.name }}
+    </button>
+  }
+</nav>
+
+<div #floatingWindowsHost style="display: contents">
+@if (graficarWindowOpen) {
+  <section
+    #floatingWindow
+    class="floating-window floating-window--graficar"
+    role="dialog"
+    aria-label="Ventana de Graficar"
+    [style.left.px]="graficarWindowX"
+    [style.top.px]="graficarWindowY"
+    [style.width.px]="graficarWindowWidth"
+    [style.height.px]="graficarWindowHeight"
+    [style.zIndex]="graficarWindowZIndex"
+  >
+    <header
+      class="floating-window__header"
+      (pointerdown)="startDrag('graficar', $event)"
+    >
+      <span class="floating-window__title">Graficar</span>
+
+      <button
+        type="button"
+        class="floating-window__close"
+        (click)="closeGraficarWindow()"
+        (pointerdown)="$event.stopPropagation()"
+        aria-label="Cerrar ventana de graficación"
+      >
+        ✕
+      </button>
+    </header>
+
+    <div class="floating-window__content">
+      <app-graficar
+        [coordenadasIniciales]="coordenadasGraficar"
+        (abrirIconos)="openIconosWindow()"
+        (coordenadaRegistrada)="onCoordenadaRegistrada($event)"
+      ></app-graficar>
+    </div>
+
+    <div
+      class="resize-handle resize-handle--se"
+      (pointerdown)="startResize('graficar', $event)"
+      aria-hidden="true"
+    ></div>
+  </section>
+}
+
+@if (iconosWindowOpen) {
+  <section
+    #iconosWindow
+    class="floating-window floating-window--iconos"
+    role="dialog"
+    aria-label="Ventana de Iconos"
+    [style.left.px]="iconosWindowX"
+    [style.top.px]="iconosWindowY"
+    [style.width.px]="iconosWindowWidth"
+    [style.height.px]="iconosWindowHeight"
+    [style.zIndex]="iconosWindowZIndex"
+  >
+    <header
+      class="floating-window__header"
+      (pointerdown)="startDrag('iconos', $event)"
+    >
+      <span class="floating-window__title">Iconos</span>
+
+      <button
+        type="button"
+        class="floating-window__close"
+        (click)="closeIconosWindow()"
+        (pointerdown)="$event.stopPropagation()"
+        aria-label="Cerrar ventana de iconos"
+      >
+        ✕
+      </button>
+    </header>
+
+    <div class="floating-window__content floating-window__content--iconos">
+      <app-iconos></app-iconos>
+    </div>
+
+    <div
+      class="resize-handle resize-handle--se"
+      (pointerdown)="startResize('iconos', $event)"
+      aria-hidden="true"
+    ></div>
+  </section>
+}
+
+</div>

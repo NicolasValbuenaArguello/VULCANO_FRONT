@@ -1,0 +1,15 @@
+<div
+  #container
+  class="logo-3d-container"
+  [class.logo-3d-container--loading]="loading"
+  [class.logo-3d-container--interactive]="enableMouseInteraction"
+>
+  <canvas #canvas></canvas>
+
+  @if (loading) {
+    <div class="logo-3d-loader" role="status" aria-live="polite" aria-label="Cargando logo 3D">
+      <span class="logo-3d-loader__spinner" aria-hidden="true"></span>
+      <span class="logo-3d-loader__text">Cargando...</span>
+    </div>
+  }
+</div>

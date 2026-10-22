@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": { "analytics": false },
+  "projects": {
+    "local-points-demo": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "index": "src/index.html",
+            "tsConfig": "tsconfig.app.json",
+            "outputPath": "dist/local-points-demo"
+          },
+          "configurations": {
+            "production": { "outputHashing": "all" },
+            "development": { "optimization": false, "sourceMap": true, "extractLicenses": false }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": { "buildTarget": "local-points-demo:build:development", "proxyConfig": "proxy.conf.json" }
+        },
+        "test": { "builder": "@angular/build:unit-test", "options": { "tsConfig": "tsconfig.spec.json" } }
+      }
+    }
+  }
+}

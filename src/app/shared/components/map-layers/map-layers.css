@@ -1,0 +1,131 @@
+/* Estilos comunes: los controles permanecen dentro del mapa, tambien en fullscreen. */
+.vulcano-map-layers {
+  --layers-accent: var(--vulcano-green, #9daa55);
+  --layers-border: var(--vulcano-border, rgba(157, 170, 85, .22));
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--vulcano-text, #e3e5df);
+  font: 12px/1.4 Inter, "Segoe UI", sans-serif;
+  pointer-events: auto;
+  z-index: 800;
+}
+.vulcano-map-layers :is(.leaflet-control-layers-toggle, .maplibre-basemap-button) {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--layers-border);
+  border-radius: 8px;
+  background: #0b0f0b;
+  background-image: none;
+  color: var(--layers-accent);
+  box-shadow: 0 4px 14px #0004;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.vulcano-map-layers :is(.leaflet-control-layers-toggle, .maplibre-basemap-button):is(:hover, [aria-expanded="true"]) {
+  background: #182018;
+  border-color: var(--layers-accent);
+  color: #dce79a;
+}
+.vulcano-map-layers :is(.leaflet-control-layers-list, .maplibre-basemap-panel) {
+  display: block;
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: min(252px, calc(100vw - 40px), var(--layers-available-width, 252px));
+  max-height: min(420px, calc(100dvh - 150px), var(--layers-available-height, 420px));
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #53602a #0b0f0b;
+  border: 1px solid var(--layers-border);
+  border-radius: 10px;
+  background: #080b08;
+  color: var(--vulcano-text, #e3e5df);
+  box-shadow: 0 10px 28px #0006;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
+}
+.vulcano-map-layers.leaflet-control-layers-expanded .leaflet-control-layers-list,
+.vulcano-map-layers:has(.maplibre-basemap-button[aria-expanded="true"]) .maplibre-basemap-panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.map-layers-heading strong { display: block; color: #dce79a; font-size: 12px; letter-spacing: .1em; }
+.map-layers-heading small { display: block; color: var(--vulcano-muted); font-size: 10px; margin-top: 3px; }
+.map-layers-section,
+.vulcano-map-layers .leaflet-control-layers-overlays[data-heading]::before {
+  display: block;
+  margin: 12px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--layers-border);
+  color: #b5a359;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+.vulcano-map-layers .leaflet-control-layers-overlays[data-heading]::before { content: attr(data-heading); }
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) { display: grid; gap: 4px; }
+.vulcano-map-layers :is(.leaflet-control-layers-list label, .maplibre-basemap-option) {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  margin: 0;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+/* Leaflet introduce un div en cada label; display contents conserva sus radios nativos. */
+.vulcano-map-layers .leaflet-control-layers-list label > div { display: contents; }
+.vulcano-map-layers :is(.leaflet-control-layers-list label, .maplibre-basemap-option):hover { background: #9daa5514; }
+.vulcano-map-layers :is(.leaflet-control-layers-list label, .maplibre-basemap-option):has(input:checked) {
+  background: #9daa5524;
+  border-color: var(--layers-border);
+  color: #dce79a;
+}
+.vulcano-map-layers input[type="radio"], .vulcano-map-layers input[type="checkbox"] {
+  position: static;
+  order: 2;
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--layers-accent);
+  cursor: pointer;
+}
+.vulcano-map-layers label span { display: flex; align-items: center; gap: 10px; padding-right: 10px; font-size: 12px; }
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) label span::before {
+  content: '';
+  display: block;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  background: var(--layers-accent);
+  mask: var(--map-option-icon) center / contain no-repeat;
+}
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) label:nth-child(1) { --map-option-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%203v18M20%203v18M3%208h18M3%2016h18M8%203l8%2018%22/%3E%3C/svg%3E"); }
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) label:nth-child(2) { --map-option-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%204h6v6H4zM14%2014h6v6h-6zM10%2010l4%204M14%203l7%207M3%2014l7%207%22/%3E%3C/svg%3E"); }
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) label:nth-child(3) { --map-option-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2%2019%209%205l5%209%203-5%205%2010ZM6%2014h5%22/%3E%3C/svg%3E"); }
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) label:nth-child(4) { --map-option-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%207a5%205%200%201%200%200%2010%205%205%200%200%200%200-10M12%201v3M12%2020v3M1%2012h3M20%2012h3M4%204l2%202M18%2018l2%202M4%2020l2-2M18%206l2-2%22/%3E%3C/svg%3E"); }
+.vulcano-map-layers :is(.leaflet-control-layers-base, .maplibre-basemap-options) label:nth-child(5) { --map-option-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20%2015A9%209%200%200%201%209%204a9%209%200%201%200%2011%2011Z%22/%3E%3C/svg%3E"); }
+.vulcano-map-layers :is(button, a, input):focus-visible { outline: 2px solid #c5cf7f; outline-offset: 3px; }
+.vulcano-map-layers label:focus-within { border-color: var(--layers-accent); }
+@media (prefers-reduced-motion: reduce) { .vulcano-map-layers, .vulcano-map-layers * { transition: none !important; } }
+@media (max-height: 480px) { .vulcano-map-layers :is(.leaflet-control-layers-list, .maplibre-basemap-panel) { max-height: min(calc(100dvh - 100px), var(--layers-available-height, 420px)); } }

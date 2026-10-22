@@ -1,0 +1,35 @@
+<div class="iconos-shell">
+  <div class="iconos-toolbar">
+    <label class="iconos-search">
+      <span>Buscar</span>
+      <input type="text" [(ngModel)]="busqueda" placeholder="Buscar símbolo" />
+    </label>
+
+    <label class="iconos-filter">
+      <span>Categoría</span>
+      <select [(ngModel)]="categoriaSeleccionada">
+        @for (categoria of categorias; track categoria) {
+          <option [value]="categoria">{{ categoria }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <div class="iconos-grid" role="list" aria-label="Catálogo de iconos OTAN">
+    @for (icono of iconosFiltrados; track icono.id) {
+      <button
+        type="button"
+        class="icono-card"
+        [class.icono-card--selected]="estaSeleccionado(icono)"
+        (click)="seleccionarIcono(icono)"
+        [attr.title]="icono.nombre"
+        role="listitem"
+      >
+        <span class="icono-card__preview">
+          <img [src]="icono.url" [alt]="icono.nombre" />
+        </span>
+        <span class="icono-card__label">{{ icono.nombre }}</span>
+      </button>
+    }
+  </div>
+</div>

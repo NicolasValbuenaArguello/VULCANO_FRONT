@@ -1,0 +1,67 @@
+/* Solo presentacion de ventanas. Los elementos interiores conservan sus estilos originales. */
+.window-workspace-host { position: relative; }
+app-window-workspace {
+  position: absolute;
+  inset: 8px 8px 64px;
+  display: block;
+  z-index: 4000;
+  pointer-events: none;
+  min-width: 0;
+  min-height: 0;
+}
+.window-workspace-surface { position: absolute; inset: 0 0 38px; pointer-events: none; }
+.window-workspace-taskbar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; gap: 5px; padding: 4px; overflow-x: auto; overflow-y: hidden;
+  pointer-events: auto; background: #090e02; border: 1px solid #303817;
+  border-radius: 5px; max-height: 36px;
+}
+.window-workspace-taskbar button, .window-detach-button, .window-actions button {
+  color: var(--hm-amber, #b5a359); background: #17200a;
+  border: 1px solid #53602a; border-radius: 4px; font: inherit;
+  cursor: pointer; min-width: 28px; min-height: 28px;
+}
+.window-workspace-launcher { position: relative; z-index: 4500; pointer-events: auto; }
+.window-workspace-launcher summary { height: 100%; padding: 2px 6px; list-style: none; white-space: nowrap; }
+.window-workspace-launcher summary::-webkit-details-marker { display: none; }
+.window-workspace-launcher > div { position: absolute; bottom: calc(100% + 6px); right: 0; width: 240px; max-width: calc(100vw - 32px); max-height: min(300px, calc(100dvh - 160px)); overflow: auto; display: grid; gap: 4px; padding: 6px; background: #090e02; border: 1px solid #303817; }
+.window-workspace-taskbar button { white-space: nowrap; font-size: 10px; padding: 3px 8px; min-height: 26px; }
+.window-workspace-taskbar .window-task-active { border-color: #49c979; color: #49c979; }
+.window-detach-button { margin-left: auto; flex: 0 0 auto; }
+.window-detach-button[hidden], .vulcano-floating-panel[hidden] { display: none !important; }
+.vulcano-floating-panel {
+  position: absolute !important; display: flex !important; flex-direction: column;
+  min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  border: 1px solid #53602a !important; border-radius: 8px;
+  background: var(--hm-panel, #090e02); color: var(--hm-amber, #b5a359);
+  box-shadow: 0 10px 28px #0008; overflow: hidden; pointer-events: auto;
+}
+.vulcano-floating-panel.window-is-active { border-color: #b5a359 !important; box-shadow: 0 12px 32px #000a; }
+.window-titlebar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex: 0 0 auto; min-height: 38px; padding: 4px 6px 4px 10px;
+  background: #17200a; border-bottom: 1px solid #303817; cursor: move; touch-action: none; user-select: none;
+}
+.window-title { font: 700 10px/1.4 Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.window-actions { display: flex; flex: 0 0 auto; gap: 3px; }
+.window-actions button { font-size: 16px; padding: 0 4px; }
+.window-panel-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; padding: 12px; overflow: auto; overscroll-behavior: contain; }
+.window-panel-content .panel-heading { flex-wrap: wrap; }
+.window-panel-content svg { max-width: 100%; height: auto; flex-shrink: 0; }
+.window-panel-content .instruments { flex: 0 0 auto; }
+.window-panel-content .terrain-profile { flex: 1 0 auto; }
+.vulcano-floating-panel .window-panel-content .terrain-profile svg { height: auto !important; min-height: 0 !important; aspect-ratio: 880 / 225; }
+.window-workspace-taskbar button:hover, .window-detach-button:hover, .window-actions button:hover { background: #2a3511; }
+.window-workspace-taskbar button:focus-visible, .window-detach-button:focus-visible, .window-actions button:focus-visible { outline: 2px solid #49c979; outline-offset: 2px; }
+.window-resize-handle { position: absolute; z-index: 2; touch-action: none; }
+.window-resize-n, .window-resize-s { left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.window-resize-n { top: 0; } .window-resize-s { bottom: 0; }
+.window-resize-e, .window-resize-w { top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.window-resize-e { right: 0; } .window-resize-w { left: 0; }
+.window-resize-ne, .window-resize-nw, .window-resize-se, .window-resize-sw { width: 12px; height: 12px; }
+.window-resize-ne { top: 0; right: 0; cursor: nesw-resize; }
+.window-resize-nw { top: 0; left: 0; cursor: nwse-resize; }
+.window-resize-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.window-resize-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+.window-is-maximized .window-resize-handle { display: none; }
+@media (pointer: coarse) { .window-resize-handle { min-width: 10px; min-height: 10px; } .window-actions button { min-width: 32px; min-height: 32px; } }

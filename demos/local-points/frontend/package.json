@@ -1,0 +1,9 @@
+{
+  "name": "local-points-demo",
+  "private": true,
+  "scripts": {
+    "start": "node ../../../node_modules/@angular/cli/bin/ng.js serve --host 127.0.0.1 --port 4305",
+    "build": "node ../../../node_modules/@angular/cli/bin/ng.js build",
+    "test": "node ../../../node_modules/@angular/cli/bin/ng.js test --watch=false"
+  }
+}

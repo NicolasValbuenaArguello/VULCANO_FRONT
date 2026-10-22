@@ -1,0 +1,265 @@
+<main class="login-page">
+  <div class="login-page__background" aria-hidden="true">
+    <span class="login-page__grid"></span>
+    <span class="login-page__glow login-page__glow--center"></span>
+  </div>
+
+  <section class="screen screen--welcome" [class.screen--active]="!showLogin" [class.screen--inactive]="showLogin"
+    [attr.aria-hidden]="showLogin" [attr.inert]="showLogin ? '' : null">
+    <header class="screen__topline screen__topline--institutional">
+      <div class="topline-zone topline-zone--left">
+        <span>EJÉRCITO NACIONAL DE COLOMBIA</span>
+        <span>COMANDO SUPERIOR // JEFATURA DE OPERACIONES</span>
+      </div>
+      <div class="topline-zone topline-zone--center">
+        <span>NIVEL DE SEGURIDAD NACIONAL: // ALTO</span>
+        <span>SISTEMA GEOESPACIAL VULCANO 3.0</span>
+      </div>
+      <div class="topline-zone topline-zone--right">
+        <span>ACCESO SEGURO PKI</span>
+        <span>SISTEMA OPERATIVO</span>
+      </div>
+    </header>
+
+    <div class="welcome-panel">
+      <article class="command-panel">
+        <div class="command-panel__seal">
+          <img class="welcome-logo" src="assets/primer_logo_vulcano.png"
+            alt="VULCANO 3.0 - Sistema de Información Geoespacial para la Artillería" />
+        </div>
+
+        <p class="command-panel__eyebrow">PLATAFORMA GEOESPACIAL ESTRATÉGICA</p>
+        <h1><span>VULCANO</span> <strong>3.0</strong></h1>
+        <p class="command-panel__lead">SISTEMA INTEGRADO DE INFORMACIÓN GEOESPACIAL<br />PARA LA ARTILLERÍA</p>
+        <p class="command-panel__sublead">CAFUE · CENTRO DE APOYO DE FUEGOS · COMANDO DE ARTILLERÍA</p>
+
+        <button type="button" class="primary-action" (click)="openLogin()" aria-label="Ingresar al sistema VULCANO">
+          <span>INGRESAR AL SISTEMA</span>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            <path d="m13 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <div class="system-status">
+          <span class="system-status__dot"></span>
+          <span>RED DE APOYO OPERATIVA · DISPONIBILIDAD TOTAL</span>
+        </div>
+      </article>
+
+      <section class="institution-grid" aria-label="Misión, visión y objetivos estratégicos">
+        <article class="institution-card institution-card--mission">
+          <div class="institution-card__header">
+            <div class="institution-card__heading">
+              <p class="institution-card__eyebrow">{{ missionConfig.titulo }}</p>
+            </div>
+            <span class="institution-card__code">{{ missionConfig.codigo }}</span>
+          </div>
+
+          <div class="institution-card__body">
+            @for (item of missionConfig.items; track $index) {
+              <div class="institutional-item">
+                <span class="institutional-bullet" aria-hidden="true"></span>
+                <span>{{ item }}</span>
+              </div>
+            }
+          </div>
+
+          <footer class="institution-card__footer">
+            <span>{{ missionConfig.pie }}</span>
+            <span>// {{ missionConfig.estado }}</span>
+          </footer>
+        </article>
+
+        <article class="institution-card institution-card--vision">
+          <div class="institution-card__header">
+            <div class="institution-card__heading">
+              <p class="institution-card__eyebrow">{{ visionConfig.titulo }}</p>
+            </div>
+            <span class="institution-card__code">{{ visionConfig.codigo }}</span>
+          </div>
+
+          <div class="institution-card__body">
+            @for (item of visionConfig.items; track $index) {
+              <div class="institutional-item">
+                <span class="institutional-bullet" aria-hidden="true"></span>
+                <span>{{ item }}</span>
+              </div>
+            }
+          </div>
+
+          <footer class="institution-card__footer">
+            <span>{{ visionConfig.pie }}</span>
+            <span>// {{ visionConfig.estado }}</span>
+          </footer>
+        </article>
+
+        <article class="institution-card institution-card--objectives">
+          <div class="institution-card__header">
+            <div class="institution-card__heading">
+              <p class="institution-card__eyebrow">{{ objetivosConfig.titulo }}</p>
+            </div>
+            <span class="institution-card__code">{{ objetivosCount }} EJES</span>
+          </div>
+
+          <div class="institution-card__body institution-card__body--objectives">
+            @for (objetivo of objetivosConfig.items; track objetivo.id) {
+              <div class="strategic-objective">
+                <div class="strategic-objective__marker" aria-hidden="true"></div>
+                <div class="strategic-objective__content">
+                  <div class="strategic-objective__title">
+                    {{ objetivo.titulo }}
+                    <span>{{ objetivo.estado }}</span>
+                  </div>
+                  <div class="strategic-objective__description">
+                    {{ objetivo.descripcion }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <footer class="institution-card__footer">
+            <span>SISTEMA DISUASIVO</span>
+            <span>// ENLACE ACTIVO</span>
+          </footer>
+        </article>
+      </section>
+    </div>
+
+    <div class="screen__footer">
+      <p>EJÉRCITO NACIONAL DE COLOMBIA</p>
+      <span>VULCANO 3.0 · Sistema de Información Geoespacial para la Artillería</span>
+      <span>CAFUE · Centro de Apoyo de Fuegos</span>
+    </div>
+  </section>
+
+  <section class="screen screen--login" [class.screen--active]="showLogin" [class.screen--inactive]="!showLogin"
+    [attr.aria-hidden]="!showLogin" [attr.inert]="!showLogin ? '' : null">
+    <div class="screen__topline">
+      <span>SISTEMA // VULCANO</span>
+      <span>SECURE ACCESS</span>
+    </div>
+
+    <div class="login-shell">
+      <button type="button" class="back-button" (click)="closeLogin()" aria-label="Volver a la presentación">
+        ← VOLVER
+      </button>
+
+      <article class="login-card">
+        <header class="login-card__header">
+
+          <div class="login-card__logo-shell">
+            <img class="welcome-logo" src="assets/primer_logo_vulcano.png"
+              alt="VULCANO 3.0 - Sistema de Información Geoespacial para la Artillería" />
+          </div>
+
+          <div class="login-card__title">
+            <h1><span>VULCANO</span> <strong>3.0</strong></h1>
+            <p>Sistema de Información Geoespacial<br />para la Artillería</p>
+            <h2>CAFUE</h2>
+            <p class="login-card__subtitle">Centro de Apoyo de Fuegos</p>
+          </div>
+        </header>
+
+        <form class="login-form" [formGroup]="form" (ngSubmit)="login()">
+          <label class="field">
+            <span class="field__label">Usuario</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 12.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z" stroke="currentColor"
+                    stroke-width="1.7" />
+                  <path d="M4.5 19.6c1.8-3.5 5-5.4 7.5-5.4s5.7 1.9 7.5 5.4" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" />
+                </svg>
+              </span>
+              <input type="text" formControlName="usuario" placeholder="Ingrese su usuario" autocomplete="username" />
+            </div>
+            @if (usuarioInvalid) {
+            <small class="field__error">El usuario es obligatorio.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field__label">Contraseña</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7.5 11V8.2a4.5 4.5 0 0 1 9 0V11" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" />
+                  <rect x="4.5" y="11" width="15" height="8.5" rx="2" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+              </span>
+              <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                placeholder="Ingrese su contraseña" autocomplete="current-password" />
+              <button type="button" class="field__toggle" (click)="togglePassword()"
+                [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12s3.7-6.5 9.5-6.5S21.5 12 21.5 12 17.8 18.5 12 18.5 2.5 12 2.5 12Z"
+                    stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                  <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+                <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4.5 5.5 19.5 18.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  <path d="M10 4.6c.6-.1 1.3-.1 2-.1 5.8 0 9.5 7.5 9.5 7.5a18.7 18.7 0 0 1-3.8 4.8"
+                    stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  <path d="M8.4 6.2C5.2 7.8 2.5 12 2.5 12s3.7 6.5 9.5 6.5c1.7 0 3.1-.4 4.3-1.1" stroke="currentColor"
+                    stroke-width="1.7" stroke-linecap="round" />
+                  <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+              </button>
+            </div>
+            @if (passwordInvalid) {
+            <small class="field__error">La contraseña es obligatoria.</small>
+            }
+          </label>
+
+          <div class="login-form__meta">
+            <label class="remember">
+              <input type="checkbox" formControlName="recordarUsuario" />
+              <span>Recordar usuario</span>
+            </label>
+            <a href="#" class="login-form__link">¿Olvidó su contraseña?</a>
+          </div>
+
+          @if (loginError()) {
+            <p class="field__error" role="alert">{{ loginError() }}</p>
+          }
+
+          <button class="login-button" type="submit" [disabled]="form.invalid || isSubmitting()">
+            <span class="login-button__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M10 6.5V5a2.5 2.5 0 0 1 5 0v1.5" stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round" />
+                <path d="M7 10.5h10c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-5c0-1.1.9-2 2-2Z"
+                  stroke="currentColor" stroke-width="1.7" />
+                <path d="m11.5 13.5 1.8 1.8 3.4-3.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </span>
+            <span>INGRESAR AL SISTEMA</span>
+          </button>
+        </form>
+
+        <footer class="login-card__footer">
+          <div class="status">
+            <span class="status__dot"></span>
+            <span>SISTEMA OPERATIVO</span>
+          </div>
+          <div class="access-note">
+            <strong>ACCESO RESTRINGIDO</strong>
+            <span>Sistema de uso institucional.</span>
+          </div>
+        </footer>
+      </article>
+
+      <div class="screen__footer">
+        <p>EJÉRCITO NACIONAL DE COLOMBIA</p>
+        <span>VULCANO 3.0 · Sistema de Información Geoespacial para la Artillería</span>
+        <span>CAFUE · Centro de Apoyo de Fuegos</span>
+      </div>
+    </div>
+  </section>
+</main>

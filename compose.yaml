@@ -1,0 +1,17 @@
+# Attach to the existing FastAPI network. The backend is managed separately.
+services:
+  vulcano:
+    build: .
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    environment:
+      AUTH_UPSTREAM: ${AUTH_UPSTREAM:?Set the FastAPI origin reachable from the shared network}
+      DEM_UPSTREAM: ${DEM_UPSTREAM:?Set the DEM origin reachable from the shared network}
+      NGINX_ENVSUBST_FILTER: '^(AUTH_UPSTREAM|DEM_UPSTREAM)$$'
+    networks:
+      - backend
+
+networks:
+  backend:
+    external: true
+    name: ${BACKEND_NETWORK:?Set the existing Docker network shared with FastAPI}

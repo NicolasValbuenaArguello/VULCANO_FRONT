@@ -1,1 +1,57 @@
-/* You can add global styles to this file, and also import other style files */
+@import './app/shared/components/geographic-measurement/measurement.css';
+@import 'leaflet/dist/leaflet.css';
+
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@import './app/shared/components/map-layers/map-layers.css';
+@import './app/shared/components/window-workspace/window-workspace.css';
+@import './app/shared/components/map-context-menu/map-context-menu.css';
+
+:root {
+  --vulcano-bg: #050805;
+  --vulcano-panel: rgba(12, 17, 13, 0.9);
+  --vulcano-green: #9daa55;
+  --vulcano-green-light: #c5cf7f;
+  --vulcano-border: rgba(157, 170, 85, 0.22);
+  --vulcano-text: #e3e5df;
+  --vulcano-muted: rgba(214, 216, 212, 0.72);
+  color-scheme: dark;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--vulcano-bg);
+  color: var(--vulcano-text);
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100dvh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+img,
+svg {
+  display: block;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}

@@ -1,0 +1,4 @@
+{
+  "/api/demo-points": { "target": "http://127.0.0.1:8025", "changeOrigin": true },
+  "/api/demo-points/**": { "target": "http://127.0.0.1:8025", "changeOrigin": true }
+}

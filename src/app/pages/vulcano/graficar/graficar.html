@@ -1,0 +1,267 @@
+<div class="graficar-shell">
+  <section class="panel panel--coordenadas">
+    <div class="panel__heading">
+      <h2>COORDENADAS</h2>
+    </div>
+    <div class="coordinates-grid">
+      <div class="coordinate-row">
+        
+        <label class="coordinate-tag coordinate-tag--select" aria-label="Selector de latitud">
+          
+          <select
+            [(ngModel)]="hemisferioLatitud"
+            (ngModelChange)="onCoordenadaChange('latitud')"
+          >
+            <option value="LN">LN</option>
+            <option value="LS">LS</option>
+          </select>
+        </label>
+
+        <div class="coordinate-fields">
+          <label class="mini-field">
+            <span>GRD</span>
+            <input
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="90"
+              step="1"
+              [(ngModel)]="latitud.grados"
+              (ngModelChange)="validarGrados('latitud')"
+            />
+          </label>
+
+          <label class="mini-field">
+            <span>MIN</span>
+            <input
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="59"
+              step="1"
+              [(ngModel)]="latitud.minutos"
+              (ngModelChange)="validarGrados('latitud')"
+            />
+          </label>
+
+          <label class="mini-field">
+            <span>SEG</span>
+            <input
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="59.999999"
+              step="0.1"
+              [(ngModel)]="latitud.segundos"
+              (ngModelChange)="validarGrados('latitud')"
+            />
+          </label>
+
+          <label class="decimal-field">
+            <span>COORDENADA</span>
+            <input type="text" [value]="latitud.decimal !== null ? (latitud.decimal | number:'1.6-6') : ''" readonly />
+          </label>
+        </div>
+      </div>
+
+      <div class="coordinate-row">
+        <label class="coordinate-tag coordinate-tag--select" aria-label="Selector de longitud">
+          <select
+            [(ngModel)]="hemisferioLongitud"
+            (ngModelChange)="onCoordenadaChange('longitud')"
+          >
+            <option value="LW">LW</option>
+            <option value="LE">LE</option>
+          </select>
+        </label>
+
+        <div class="coordinate-fields">
+          <label class="mini-field">
+            <span>GRD</span>
+            <input
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="180"
+              step="1"
+              [(ngModel)]="longitud.grados"
+              (ngModelChange)="validarGrados('longitud')"
+            />
+          </label>
+
+          <label class="mini-field">
+            <span>MIN</span>
+            <input
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="59"
+              step="1"
+              [(ngModel)]="longitud.minutos"
+              (ngModelChange)="validarGrados('longitud')"
+            />
+          </label>
+
+          <label class="mini-field">
+            <span>SEG</span>
+            <input
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="59.999999"
+              step="0.1"
+              [(ngModel)]="longitud.segundos"
+              (ngModelChange)="validarGrados('longitud')"
+            />
+          </label>
+
+          <label class="decimal-field">
+            <span>COORDENADA</span>
+            <input type="text" [value]="longitud.decimal !== null ? (longitud.decimal | number:'1.6-6') : ''" readonly />
+          </label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel panel--icono">
+    <div class="panel__heading">
+      <h2>ICONO</h2>
+      <button
+        type="button"
+        class="icono-otan-button"
+        (click)="abrirVentanaIconos()"
+        title="Graficación OTAN"
+        aria-label="Graficación OTAN"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" />
+          <path d="M12 6.5v11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <path d="M6.5 12h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <circle cx="12" cy="12" r="2.1" fill="currentColor" />
+        </svg>
+      </button>
+    </div>
+    <div class="media-slot media-slot--icon">
+      <input
+        #iconoInput
+        class="file-input"
+        type="file"
+        accept="image/*"
+        (change)="seleccionarIcono($event)"
+      />
+
+      @if (iconoSeleccionado) {
+        <button
+          type="button"
+          class="icono-preview"
+          (click)="iconoInput.click()"
+          title="Cambiar icono"
+          aria-label="Cambiar icono"
+        >
+          <img class="media-preview media-preview--icon" [src]="iconoSeleccionado" alt="Vista previa del icono seleccionado" />
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="empty-state empty-state--clickable empty-state--icon"
+          (click)="iconoInput.click()"
+          [attr.title]="iconoTooltip"
+        >
+          <span class="empty-state__label">SIN ICONO</span>
+          <span class="empty-state__hint">Seleccionar</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="panel panel--configuracion">
+    <div class="panel__heading">
+      <h2>CONFIGURACION</h2>
+    </div>
+
+    <div class="configuration-stack">
+      <label class="config-control">
+        <span>TIPO DE GRAFICACÓN</span>
+        <select [(ngModel)]="configuracion1">
+          <option value="">Seleccione</option>
+          @for (tipo of tiposGraficacion; track tipo) { <option [value]="tipo">{{ tipo }}</option> }
+        </select>
+      </label>
+
+      <label class="config-control">
+        <span>Nombre</span>
+        <input type="text" [(ngModel)]="configuracion2" placeholder="Valor o descriptor" />
+      </label>
+
+      <label class="config-control">
+        <span>CONFIGURACION 3</span>
+        <input type="text" [(ngModel)]="configuracion3" placeholder="Valor o descriptor" />
+      </label>
+    </div>
+  </section>
+
+  <section class="panel panel--imagen">
+    <div class="panel__heading">
+      <h2>IMAGEN</h2>
+    </div>
+
+    <div class="media-slot media-slot--image">
+      <input
+        #imagenInput
+        class="file-input"
+        type="file"
+        accept="image/*"
+        (change)="seleccionarImagen($event)"
+      />
+
+      @if (imagenSeleccionada) {
+        <img class="media-preview media-preview--image" [src]="imagenSeleccionada" alt="Vista previa de la imagen seleccionada" />
+      } @else {
+        <button
+          type="button"
+          class="empty-state empty-state--clickable"
+          (click)="imagenInput.click()"
+          [attr.title]="imagenTooltip"
+        >
+          <span class="empty-state__label">SIN IMAGEN</span>
+          <span class="empty-state__hint">Cargar</span>
+        </button>
+      }
+    </div>
+    <div class="action-row">
+      <button type="button" class="action-button" (click)="limpiarFormulario()" title="Limpiar formulario">
+        <span class="action-button__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18" />
+            <path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6" />
+            <path d="M6 6l1 14h10l1-14" />
+            <path d="M10 10v6" />
+            <path d="M14 10v6" />
+          </svg>
+        </span>
+        <span class="action-button__text">Limpiar</span>
+      </button>
+
+      <button type="button" class="action-button" (click)="mostrarVistaPrevia()" title="Mostrar vista previa">
+        <span class="action-button__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </span>
+        <span class="action-button__text">Vista previa</span>
+      </button>
+
+      <button type="button" class="action-button action-button--primary" (click)="graficar()" title="Graficar elemento">
+        <span class="action-button__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z" />
+            <circle cx="12" cy="10" r="2.2" />
+          </svg>
+        </span>
+        <span class="action-button__text">Graficar</span>
+      </button>
+    </div>
+  </section>
+</div>

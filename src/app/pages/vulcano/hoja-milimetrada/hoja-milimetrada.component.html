@@ -1,0 +1,776 @@
+<section class="console" aria-labelledby="hoja-milimetrada-titulo">
+  <header class="console-header">
+    <div class="identity">
+      <span class="status-light" aria-hidden="true"></span>
+      <h2 id="hoja-milimetrada-titulo">VULCANO 3.0 // DIRECCIÓN DE TIRO BALÍSTICO</h2>
+      <span class="badge muted">CALC-UNIT-IV</span>
+    </div>
+    <div class="system-status">
+      <span>GRID: <strong>UTM-30T-WN</strong></span>
+      <span>MODO: <b>DIRECTO</b></span>
+      <span>STATUS: <strong>ENLACE ACTIVO</strong></span>
+    </div>
+  </header>
+
+  <div class="panel-grid">
+    <section
+  #hojaCompleta
+  class="panel plotting-panel window-workspace-host"
+  aria-label="Hoja milimetrada local de demostración">
+      <app-window-workspace #panelWorkspace></app-window-workspace>
+      <!-- Mantiene el indicador del informe dentro del elemento fullscreen. -->
+      <ng-content select="[indicadorInforme]"></ng-content>
+      <header class="coordinate-header">
+        <span>PLANO CARTESIANO · X / Y · UNIDADES LOCALES</span>
+        <span>ZOOM {{ zoomPercent() }} % <span class="badge">VISTA DEMOSTRATIVA</span></span>
+        
+<button
+  type="button"
+  class="btn-hoja-fullscreen"
+  (click)="alternarPantallaCompleta()"
+  [attr.aria-label]="pantallaCompleta()
+    ? 'Salir de pantalla completa'
+    : 'Activar pantalla completa'"
+  [title]="pantallaCompleta()
+    ? 'Salir de pantalla completa'
+    : 'Pantalla completa'">
+
+  @if (pantallaCompleta()) {
+    <span>⛶ SALIR DE PANTALLA COMPLETA</span>
+  } @else {
+    <span>⛶ PANTALLA COMPLETA</span>
+  }
+
+</button>
+
+      </header>
+      <div #plotArea class="plot-area interactive-plane">
+        <div class="demo-state" role="status">
+          @if (!elements.length) { <span>Sin registros para mostrar.</span> }
+        </div>
+        <svg #localPlane class="coordinate-plot" [class.is-dragging]="dragging()"
+          [attr.viewBox]="'0 0 ' + viewport().width + ' ' + viewport().height" role="group"
+          aria-label="Plano local. Arrastra el fondo para desplazar; usa la rueda o los botones para ampliar. Los puntos son ficticios."
+          (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="endDrag($event)"
+          (pointercancel)="endDrag($event)" (lostpointercapture)="endDrag($event)" (pointerleave)="onPointerLeave()">
+          <g class="local-grid" aria-hidden="true">
+            @for (line of verticalLines(); track line.value) {
+            <line [attr.x1]="line.pixel" y1="0" [attr.x2]="line.pixel" [attr.y2]="viewport().height"
+              [class.grid-major]="line.major" [class.grid-minor]="!line.major" />
+            }
+            @for (line of horizontalLines(); track line.value) {
+            <line x1="0" [attr.y1]="line.pixel" [attr.x2]="viewport().width" [attr.y2]="line.pixel"
+              [class.grid-major]="line.major" [class.grid-minor]="!line.major" />
+            }
+            <line class="cartesian-axis" x1="0" [attr.y1]="origin().y" [attr.x2]="viewport().width"
+              [attr.y2]="origin().y" />
+            <line class="cartesian-axis" [attr.x1]="origin().x" y1="0" [attr.x2]="origin().x"
+              [attr.y2]="viewport().height" />
+            @for (line of verticalLines(); track line.value) {
+            @if (line.major && line.pixel > 24 && line.pixel < viewport().width - 24) { <text class="local-axis-label"
+              [attr.x]="line.pixel" [attr.y]="xLabelY()" text-anchor="middle">{{ line.value }}</text>
+              }
+              }
+              @for (line of horizontalLines(); track line.value) {
+              @if (line.major && line.value !== 0 && line.pixel > 20 && line.pixel < viewport().height - 20) { <text
+                class="local-axis-label" [attr.x]="yLabelX()" [attr.y]="line.pixel + 4" text-anchor="end">{{ line.value
+                }}</text>
+                }
+                }
+                <text class="axis-name" [attr.x]="viewport().width - 14" [attr.y]="xLabelY()">X</text>
+                <text class="axis-name" [attr.x]="yLabelX()" y="14">Y</text>
+                <circle class="local-origin" [attr.cx]="origin().x" [attr.cy]="origin().y" r="3" />
+                @for (reference of referenciasLongitud(); track reference.pixel) {
+                <text class="geographic-axis-label" [attr.x]="reference.pixel" [attr.y]="viewport().height - 24"
+                  text-anchor="middle">{{ reference.label }}</text>
+                }
+                @for (reference of referenciasLatitud(); track reference.pixel) {
+                <text class="geographic-axis-label" x="8" [attr.y]="reference.pixel - 12">{{ reference.label }}</text>
+                }
+          </g>
+          
+<!-- ========================================= -->
+<!-- CAPA DE CURVAS DE NIVEL                   -->
+<!-- ========================================= -->
+
+<g
+  class="curvas-nivel-layer"
+  aria-label="Curvas de nivel"
+  pointer-events="none">
+
+  @for (curva of curvasNivelPantalla(); track curva.id) {
+
+    <polyline
+      [attr.points]="curva.puntos"
+      [class.curva-principal]="curva.principal"
+      [class.curva-secundaria]="!curva.principal"
+      fill="none" />
+
+  }
+
+</g>
+
+
+
+          @if (lineaFijada(); as linea) {
+          <line [attr.x1]="linea.origen.x" [attr.y1]="linea.origen.y" [attr.x2]="linea.destino.x"
+            [attr.y2]="linea.destino.y" stroke="#ff5d4d" stroke-width="2" stroke-dasharray="7 4"
+            pointer-events="none" />
+          }
+          @for (element of elementosPantalla(); track element.id) {
+          <g class="demo-element" [class.demo-element--selected]="selectedId() === element.id"
+            [attr.transform]="'translate(' + element.screenX + ' ' + element.screenY + ')'"
+            [attr.data-element-id]="element.id" role="button" tabindex="0"
+            [attr.aria-label]="element.name + ', ' + element.id + '. Abrir opciones'" aria-haspopup="true"
+            [attr.aria-expanded]="contextElement()?.id === element.id" (pointerdown)="$event.stopPropagation()"
+            (click)="openElement($event, element)" (keydown.enter)="openElement($event, element)"
+            (keydown.space)="openElement($event, element)">
+            <circle class="element-hit-area" r="15" />
+            <circle class="element-selection" r="13" />
+            @if (element.iconUrl) {
+            <image [attr.href]="element.iconUrl" x="-18" y="-18" width="36" height="36"
+              preserveAspectRatio="xMidYMid meet" /> } @else {
+            <path [attr.d]="element.icon" [attr.fill]="element.color" class="element-symbol" /> }
+            <text x="19" y="4" class="element-label">{{ element.name }}</text>
+          </g>
+          }
+          @if (pointer(); as point) {
+          @if (cursor(); as local) {
+          @if (cursorTooltip(); as position) {
+          <g class="geographic-cursor" aria-hidden="true">
+            <path class="cursor-crosshair"
+              [attr.d]="'M ' + (point.x - 6) + ' ' + point.y + ' h 12 M ' + point.x + ' ' + (point.y - 6) + ' v 12'" />
+            <g [attr.transform]="'translate(' + position.x + ' ' + position.y + ')'">
+              <rect width="168" height="144" rx="4" />
+              @if (cursorGeografico(); as geo) {
+              <text x="10" y="19">LAT {{ geo.latitud.toFixed(6) }}&#176;</text>
+              <text x="10" y="39">LON {{ geo.longitud.toFixed(6) }}&#176;</text>
+              <text x="10" y="65">{{ formatearCursorDms(geo.latitud, true) }}</text>
+              <text x="10" y="85">{{ formatearCursorDms(geo.longitud, false) }}</text>
+              } @else {
+              <text x="10" y="19">LAT --</text><text x="10" y="39">LON --</text>
+              <text x="10" y="65">DMS LAT --</text><text x="10" y="85">DMS LON --</text>
+              }
+              <path class="cursor-separator" d="M10 48H158 M10 94H158" />
+              <text class="cursor-cartesian" x="10" y="113">X {{ format(local.x) }}</text>
+              <text class="cursor-cartesian" x="10" y="133">Y {{ format(local.y) }}</text>
+            </g>
+          </g>
+          }
+          }
+          }
+        </svg>
+        @if (contextElement(); as element) {
+        <div class="element-menu" role="group" [attr.aria-label]="'Opciones de ' + element.name"
+          [style.left.px]="menuPosition().x" [style.top.px]="menuPosition().y">
+          <span class="element-menu-title">{{ element.id }}</span>
+          <button type="button" (click)="showInformation()">Ver información</button>
+          <button type="button" (click)="abrirVentanaProyectar($event)">Proyectar</button>
+          <button type="button" (click)="fijarElemento()">Fijar</button>
+        </div>
+        }
+        @if (etiquetaRelacion(); as etiqueta) {
+        <span [style.left.px]="etiqueta.x" [style.top.px]="etiqueta.y"
+          style="position:absolute;transform:translate(-50%,-50%);padding:2px 6px;background:#111b;color:#fff;font-size:11px;pointer-events:none">{{
+          etiqueta.texto }}</span>
+        }
+        @if (information(); as element) {
+        <aside class="element-information" aria-label="Información del elemento" aria-live="polite">
+          <button type="button" class="information-close" aria-label="Cerrar información"
+            (click)="closePopovers()">×</button>
+          <h4>{{ element.name }}</h4>
+          <dl>
+            <div>
+              <dt>ID</dt>
+              <dd>{{ element.id }}</dd>
+            </div>
+            <div>
+              <dt>X</dt>
+              <dd>{{ format(element.x) }}</dd>
+            </div>
+            <div>
+              <dt>Y</dt>
+              <dd>{{ format(element.y) }}</dd>
+            </div>
+          </dl>
+          <p>Coordenadas locales · unidades de demostración</p>
+        </aside>
+        }
+        @if (elementoProyectar(); as element) {
+        <div class="project-modal-backdrop" [appMapActionPortal]="proyeccionMapaHost()" (click)="cerrarVentanaProyectar($event)"
+          (pointerdown)="$event.stopPropagation()">
+          <section class="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title"
+            [style.transform]="'translate(' + modalProyectarPosicion().x + 'px, ' + modalProyectarPosicion().y + 'px)'"
+            (click)="$event.stopPropagation()">
+            <header class="project-modal-header" [class.project-dragging]="arrastrandoProyectar()"
+              (pointerdown)="iniciarDragProyectar($event)" (pointermove)="moverDragProyectar($event)"
+              (pointerup)="terminarDragProyectar($event)" (pointercancel)="terminarDragProyectar($event)"
+              (lostpointercapture)="terminarDragProyectar($event)">
+              <h3 id="project-modal-title"><span aria-hidden="true">◎</span> PROYECTAR</h3>
+              <span class="project-grip" aria-hidden="true">••••••<br />••••••</span>
+              <button type="button" class="project-close" aria-label="Cerrar ventana Proyectar"
+                (pointerdown)="$event.stopPropagation()" (click)="cerrarVentanaProyectar($event)">×</button>
+            </header>
+            <div class="project-modal-content">
+              <div class="project-left">
+                <section class="project-card project-origin">
+                  <header>
+                    <h4><span aria-hidden="true">⌖</span> COORDENADAS ORIGEN</h4><span class="project-point">PUNTO:
+                      <strong>{{ element.name || '--' }}</strong></span>
+                  </header>
+                  @for (coordenada of coordenadasOrigen(); track coordenada.label) {
+                  <fieldset class="project-coordinate">
+                    <legend>{{ coordenada.label }}</legend>
+                    <div class="project-dms">
+                      <label>HEM.<input [attr.aria-label]="coordenada.label + ' hemisferio'"
+                          [value]="coordenada.hemisferio" readonly /></label>
+                      <label>GRD<input [attr.aria-label]="coordenada.label + ' grados'" [value]="coordenada.grados"
+                          readonly /></label>
+                      <label>MIN<input [attr.aria-label]="coordenada.label + ' minutos'" [value]="coordenada.minutos"
+                          readonly /></label>
+                      <label>SEG<input [attr.aria-label]="coordenada.label + ' segundos'" [value]="coordenada.segundos"
+                          readonly /></label>
+                      <label>DECIMAL<input [attr.aria-label]="coordenada.label + ' decimal'"
+                          [value]="coordenada.decimal" readonly /></label>
+                    </div>
+                  </fieldset>
+                  }
+                </section>
+                <section class="project-card project-config">
+                  <label class="project-type-selector">TIPO DE GRAFICACIÃ“N<select aria-label="Tipo de graficaciÃ³n"
+                      [(ngModel)]="tipoGraficacionProyeccion">
+                      <option value="">Seleccione</option>@for (tipo of tiposGraficacion; track tipo) { <option
+                        [value]="tipo">{{ tipo }}</option> }
+                    </select></label>
+                  <label>ICONO</label>
+                  <button type="button" class="project-icon-catalog-button" (click)="abrirCatalogoIconos.emit()">ABRIR
+                    CATÁLOGO DE ICONOS</button>
+                  @if (iconoProyeccion(); as icono) { <div class="project-icon-current"><img [src]="icono.url"
+                      [alt]="icono.nombre" /> <span>{{ icono.nombre }}</span></div> }
+                  <header>
+                    <h4><span aria-hidden="true">⚙</span> CONFIGURACIÓN</h4>
+                  </header>
+                  <label>TIPO DE GRAFICACIÓN<select aria-label="Tipo de graficación heredado del origen" disabled>
+                      <option>{{ element.tipoGraficacion || '--' }}</option>
+                    </select></label>
+                  <label>NOMBRE DEL PUNTO PROYECTADO<input type="text" [(ngModel)]="nombreProyeccion" placeholder="--"
+                      autocomplete="off" /></label>
+                </section>
+              </div>
+              <section class="project-card project-parameters">
+                <header>
+                  <h4><span aria-hidden="true">∠</span> PARÁMETROS DE PROYECCIÓN</h4>
+                </header>
+                <div class="project-inputs">
+                  <label>DISTANCIA<span class="project-unit"><input aria-label="Distancia" type="number" min="0"
+                        step="any" [(ngModel)]="distanciaProyeccion" placeholder="--" /><span>m</span></span></label>
+                  <label>AZIMUT<span class="project-unit"><input aria-label="Azimut" type="number" min="0" max="359.9"
+                        step="0.1" [ngModel]="azimutProyeccion ?? ''" (ngModelChange)="actualizarAzimut($event)"
+                        placeholder="--" /><span>°</span></span></label>
+                </div>
+                <svg class="projection-compass" viewBox="0 0 440 440" role="img"
+                  aria-label="Compás interactivo; también puede editar el campo Azimut"
+                  (pointerdown)="onCompassPointerDown($event)" (pointermove)="onCompassPointerMove($event)"
+                  (pointerup)="onCompassPointerUp($event)" (pointercancel)="onCompassPointerUp($event)">
+                  <circle cx="220" cy="220" r="207" class="projection-rim" />
+                  <circle cx="220" cy="220" r="188" />
+                  <circle cx="220" cy="220" r="142" />
+                  <path d="M220 80V360 M80 220H360" class="projection-guides" />
+                  @for (mark of marcasProyeccion; track mark) {
+                  <line x1="220" y1="35" x2="220" [attr.y2]="mark % 30 === 0 ? 55 : 43"
+                    [attr.transform]="'rotate(' + mark + ' 220 220)'" [class.projection-major]="mark % 30 === 0"
+                    class="projection-tick" />
+                  }
+                  @for (mark of [0,30,60,90,120,150,180,210,240,270,300,330]; track mark) {
+                  <text [attr.x]="220 + (compassX(mark) - 110) * 1.67" [attr.y]="220 + (compassY(mark) - 115) * 1.67"
+                    class="projection-degree">{{ mark }}°</text>
+                  }
+                  <text x="220" y="105" class="projection-cardinal">N</text><text x="335" y="220"
+                    class="projection-cardinal">E</text><text x="220" y="335" class="projection-cardinal">S</text><text
+                    x="105" y="220" class="projection-cardinal">W</text>
+                  @if (azimutProyeccion !== null) {
+                  <g [attr.transform]="'rotate(' + azimutProyeccion + ' 220 220)'" class="projection-needle">
+                    <path d="M220 220L215 91L220 72L225 91Z" />
+                    <circle cx="220" cy="76" r="5" />
+                  </g>
+                  }
+                  <circle cx="220" cy="220" r="9" class="projection-center" />
+                  <circle cx="220" cy="220" r="3" class="projection-pivot" />
+                </svg>
+                <div class="projection-direction">DIRECCIÓN<strong>{{ azimutProyeccion === null ? '--' :
+                    (azimutProyeccion | number:'1.1-1') + '°' }}</strong></div>
+              </section>
+            </div>
+            <footer class="project-modal-footer">
+              <button type="button" class="projection-cancel" (click)="cerrarVentanaProyectar($event)"><span
+                  aria-hidden="true">×</span> CANCELAR</button>
+              <button type="button" class="projection-submit" [disabled]="proyectando"
+                (click)="proyectarElemento()"><span aria-hidden="true">▶</span> {{ proyectando ? 'PROYECTANDO...' :
+                'PROYECTAR' }}</button>
+            </footer>
+          </section>
+        </div>
+        }
+      </div>
+      <footer class="panel-footer local-plane-footer">
+        <div class="local-scale" aria-label="Escala en unidades locales de demostración">
+          <span class="scale-rule" [style.width.px]="scaleBar().pixels"></span>
+          <span>{{ scaleBar().units }} u. locales</span>
+        </div>
+        <span class="cursor-coordinates">
+          @if (cursor(); as point) {
+          X: {{ format(point.x) }} · Y: {{ format(point.y) }}
+          } @else {
+          X: — · Y: —
+          }
+        </span>
+        <div class="plane-controls" role="group" aria-label="Controles del plano">
+          <button type="button" aria-label="Alejar" title="Alejar" [disabled]="zoom() <= minZoom"
+            (click)="zoomBy(1 / 1.25)">−</button>
+          <button type="button" aria-label="Restablecer vista" title="Restablecer vista"
+            (click)="resetView()">↺</button>
+          <button type="button" aria-label="Acercar" title="Acercar" [disabled]="zoom() >= maxZoom"
+            (click)="zoomBy(1.25)">+</button>
+
+          
+
+
+
+<!-- ========================================= -->
+<!-- CONTROLES DE CURVAS DE NIVEL              -->
+<!-- ========================================= -->
+<button type="button" (click)="abrirGraficar.emit()">GRAFICAR</button>
+<button type="button" [disabled]="generandoInforme" (click)="informeSolicitado.emit()">INFORME</button>
+
+<button
+  type="button"
+  [disabled]="cargandoCurvas()"
+  (click)="cargarCurvasNivel()">
+
+  {{
+    cargandoCurvas()
+      ? 'CARGANDO...'
+      : curvasConsultadas()
+        ? 'ACTUALIZAR CURVAS'
+        : 'CARGAR CURVAS'
+  }}
+
+</button>
+
+<button
+  type="button"
+  [disabled]="!curvasConsultadas()"
+  (click)="alternarVisibilidadCurvas()">
+
+  {{
+    mostrarCurvasNivel()
+      ? 'OCULTAR CURVAS'
+      : 'MOSTRAR CURVAS'
+  }}
+
+</button>
+
+<button
+  type="button"
+  [disabled]="!curvasConsultadas() || cargandoCurvas()"
+  (click)="limpiarCurvasNivel()">
+
+  LIMPIAR CURVAS
+
+</button>
+<button
+  type="button"
+  class="btn-curvas-automaticas"
+  [class.activo]="curvasAutomaticas()"
+  (click)="alternarCurvasAutomaticas()"
+  [attr.aria-pressed]="curvasAutomaticas()"
+>
+  {{ curvasAutomaticas()
+      ? '● CURVAS AUTO: ON'
+      : '○ CURVAS AUTO: OFF'
+  }}
+</button>
+<details class="window-workspace-launcher" #panelLauncher (toggle)="panelLauncher.open">
+  <summary role="button" [attr.aria-expanded]="panelLauncher.open">{{ panelLauncher.open ? '▾' : '▸' }} PANELES ({{ panelWorkspace.manager.floating().length }})</summary>
+  <div>
+    @for (window of panelWorkspace.manager.windows(); track window.id) {
+      <button type="button" (click)="panelWorkspace.activate(window.id, panelLauncher)">{{ window.title }}</button>
+    }
+  </div>
+</details>
+
+        </div>
+        <div class="local-plane-note">
+          <span>Coordenadas locales de demostración · sin referencia geográfica</span>
+          <strong role="status">{{ selectedId() ? 'Elemento seleccionado' : '' }}</strong>
+        </div>
+        
+@if (zonaCurvasDesactualizada()) {
+  <div class="curvas-aviso" role="status">
+    La zona visible ha cambiado.
+    Presione ACTUALIZAR CURVAS
+    para consultar el relieve.
+  </div>
+}
+
+@if (errorCurvas(); as error) {
+  <div class="curvas-aviso" role="alert">
+    {{ error }}
+  </div>
+}
+
+      </footer>
+    </section>
+
+    <section class="panel orientation-panel" aria-labelledby="hm-orientation-title">
+      <div class="orientation-row" appFloatingPanel="ballistic" windowTitle="Orientación balística">
+        <header class="panel-heading">
+          <h3 id="hm-orientation-title">ORIENTACIÓN BALÍSTICA</h3>
+          <span class="badge">SISTEMA ACTIVO</span>
+        </header>
+        <div class="instruments">
+          <figure class="instrument">
+            <svg viewBox="0 0 220 220" role="img" aria-label="Indicador estático de dirección">
+              <circle cx="110" cy="110" r="103" class="instrument-rim" />
+              <circle cx="110" cy="110" r="90" class="instrument-ring" />
+              <circle cx="110" cy="110" r="79" class="instrument-inner" />
+              <g class="compass-ticks">
+                <path d="M110 20v11 M110 189v11 M20 110h11 M189 110h11" />
+                <path d="M46 46l8 8 M166 166l8 8 M46 174l8-8 M166 54l8-8" class="minor-ticks" />
+              </g>
+              <g class="compass-labels">
+                <text x="110" y="47">N</text><text x="110" y="184">S</text>
+                <text x="44" y="115">W</text><text x="177" y="115">E</text>
+              </g>
+              <path d="M110 48V172 M48 110H172" class="instrument-guides" />
+              <path d="M45 45 L132 133" class="needle-tail"
+                [attr.transform]="'rotate(' + (azimut() - 315) + ' 110 110)'" />
+              <path d="M45 45 L110 110" class="needle" [attr.transform]="'rotate(' + (azimut() - 315) + ' 110 110)'" />
+              <circle cx="110" cy="110" r="5" class="red-fill" />
+              <text x="110" y="119" class="dial-caption">AZ. MILS</text>
+              <text x="110" y="136" class="dial-value">{{ tieneRelacion() ? format(azimut()) + '°' : '--' }}</text>
+            </svg>
+            <figcaption>
+              <h4>DIRECCIÓN</h4><strong>{{ tieneRelacion() ? (azimut() * 6400 / 360).toFixed(0) + ' mils' : '--'
+                }}</strong>
+            </figcaption>
+          </figure>
+          <figure class="instrument">
+            <svg viewBox="0 0 220 220" role="img" aria-label="Indicador estático de elevación">
+              <circle cx="110" cy="110" r="103" class="instrument-rim" />
+              <circle cx="110" cy="110" r="85" class="elevation-ring" />
+              <path d="M110 26V122H196" class="instrument-guides" />
+              @if (simulacionTrayectoria) {
+              <path d="M106 122 L132 64 A65 65 0 0 1 164 126 Z" class="elevation-sector" /> }
+              <circle cx="106" cy="122" r="4" class="amber-fill" />
+              <text x="153" y="89" class="elevation-angle">{{ simulacionTrayectoria ?
+                (simulacionTrayectoria.datos_simulados.angulo_visual_grados | number:'1.1-1') + '°' : '--' }}</text>
+            </svg>
+            <figcaption>
+              <h4>ELEVACIÓN</h4><strong>{{ simulacionTrayectoria ?
+                ((simulacionTrayectoria.datos_simulados.angulo_visual_grados * 6400 / 360) | number:'1.0-0') + ' mils /
+                ' + (simulacionTrayectoria.datos_simulados.angulo_visual_grados | number:'1.1-1') + '°' : '-- mils /
+                --°' }}</strong>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+      <div class="orientation-separator" aria-hidden="true"></div>
+      <div class="orientation-row orientation-row--pieza" appFloatingPanel="piece" windowTitle="Orientación de pieza" [windowMinWidth]="380" [windowMinHeight]="260">
+        <header class="panel-heading panel-heading--sub">
+          <h3>ORIENTACIÓN PIEZA</h3>
+        </header>
+        <div class="instruments instruments--pieza">
+          <figure class="instrument">
+            <svg viewBox="0 0 220 220" role="img" aria-label="Indicador de dirección de pieza" class="pieza-dial"
+              [class.pieza-dial--manual]="controlManualPieza.activo"
+              [class.pieza-dial--dragging]="arrastreManualPieza?.tipo === 'direccion'"
+              (pointerdown)="iniciarArrastreDireccion($event)" (pointermove)="arrastrarControlManualPieza($event)"
+              (pointerup)="finalizarArrastreControlManualPieza($event)"
+              (pointercancel)="finalizarArrastreControlManualPieza($event)"
+              (lostpointercapture)="finalizarArrastreControlManualPieza($event)">
+              <defs>
+                <linearGradient id="pieza-metal" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#323c25" />
+                  <stop offset="0.28" stop-color="#7b7950" />
+                  <stop offset="0.5" stop-color="#424b31" />
+                  <stop offset="0.78" stop-color="#656444" />
+                  <stop offset="1" stop-color="#20291b" />
+                </linearGradient>
+                <radialGradient id="pieza-face">
+                  <stop offset="0" stop-color="#202c15" />
+                  <stop offset="0.85" stop-color="#17210e" />
+                  <stop offset="1" stop-color="#0e1609" />
+                </radialGradient>
+              </defs>
+              <circle cx="110" cy="110" r="103" class="instrument-rim" />
+              <circle cx="110" cy="110" r="90" class="instrument-ring" />
+              <circle cx="110" cy="110" r="79" class="instrument-inner" />
+              <g class="pieza-divisions">
+                @for (marca of marcasPieza; track marca) {
+                <path d="M110 23 V28" [attr.transform]="'rotate(' + marca + ' 110 110)'" /> }
+              </g>
+              <g class="compass-ticks">
+                <path d="M110 20v11 M110 189v11 M20 110h11 M189 110h11" />
+                <path d="M46 46l8 8 M166 166l8 8 M46 174l8-8 M166 54l8-8" class="minor-ticks" />
+              </g>
+              <g class="compass-labels">
+                <text x="110" y="47">N</text><text x="110" y="184">S</text>
+                <text x="44" y="115">W</text><text x="177" y="115">E</text>
+              </g>
+              <path d="M110 48V172 M48 110H172" class="instrument-guides" />
+              <g [attr.transform]="'rotate(' + rotacionDireccion(direccionVisualPiezaGrados()) + ' 110 110)'">
+                <path d="M110 143 L106 112 L110 54 L114 112 Z" class="pieza-needle" />
+                <path d="M110 60 V105" class="pieza-needle-highlight" />
+              </g>
+              <circle cx="110" cy="110" r="8" class="pieza-pivot" />
+              <circle cx="110" cy="110" r="4" class="pieza-pivot-inner" />
+              <text x="110" y="153" class="dial-caption">AZ. MILS</text>
+              <text x="110" y="167" class="dial-value">{{ formatGrados(direccionVisualPiezaGrados()) }}</text>
+            </svg>
+            <figcaption>
+              <h4>{{ etiquetaDireccionPieza() }}</h4><strong>{{ formatMilsGrados(direccionVisualPiezaMils(),
+                direccionVisualPiezaGrados()) }}</strong>
+            </figcaption>
+          </figure>
+          <div class="pieza-manual-control" [class.pieza-manual-control--active]="controlManualPieza.activo"
+            role="group" aria-label="Control manual de orientación de pieza">
+            <button type="button" class="pieza-control-button pieza-control-button--up"
+              [disabled]="!controlManualPieza.activo"
+              (pointerdown)="iniciarMovimientoContinuo('elevacion-arriba', $event)"
+              (pointerup)="detenerMovimientoContinuo()" (pointercancel)="detenerMovimientoContinuo()"
+              (pointerleave)="detenerMovimientoContinuo()"><span aria-hidden="true">▲</span><strong>UP</strong></button>
+            <button type="button" class="pieza-control-button pieza-control-button--left"
+              [disabled]="!controlManualPieza.activo"
+              (pointerdown)="iniciarMovimientoContinuo('direccion-izquierda', $event)"
+              (pointerup)="detenerMovimientoContinuo()" (pointercancel)="detenerMovimientoContinuo()"
+              (pointerleave)="detenerMovimientoContinuo()"><span
+                aria-hidden="true">◀</span><strong>LEFT</strong></button>
+            <button type="button" class="pieza-control-button pieza-control-button--power"
+              [class.pieza-control-button--on]="controlManualPieza.activo" (click)="activarDesactivarControlManual()">{{
+              controlManualPieza.activo ? 'ON' : 'OFF' }}</button>
+            <button type="button" class="pieza-control-button pieza-control-button--right"
+              [disabled]="!controlManualPieza.activo"
+              (pointerdown)="iniciarMovimientoContinuo('direccion-derecha', $event)"
+              (pointerup)="detenerMovimientoContinuo()" (pointercancel)="detenerMovimientoContinuo()"
+              (pointerleave)="detenerMovimientoContinuo()"><span
+                aria-hidden="true">▶</span><strong>RIGHT</strong></button>
+            <button type="button" class="pieza-control-button pieza-control-button--down"
+              [disabled]="!controlManualPieza.activo"
+              (pointerdown)="iniciarMovimientoContinuo('elevacion-abajo', $event)"
+              (pointerup)="detenerMovimientoContinuo()" (pointercancel)="detenerMovimientoContinuo()"
+              (pointerleave)="detenerMovimientoContinuo()"><span
+                aria-hidden="true">▼</span><strong>DOWN</strong></button>
+            <div class="pieza-manual-fields">
+              <div class="pieza-manual-field">
+                <label for="azimutManual">AZIMUT</label>
+                <div class="pieza-manual-input"><input #azimutManual id="azimutManual" type="number" step="0.01" min="0"
+                    max="359.99" required [disabled]="!controlManualPieza.activo"
+                    [ngModelOptions]="{ standalone: true }" [ngModel]="valorCampoManualPieza('direccion')"
+                    (ngModelChange)="actualizarCampoManualPieza('direccion', $event)"
+                    (keydown.enter)="$event.preventDefault(); actualizarCampoManualPieza('direccion', azimutManual.valueAsNumber)"
+                    aria-describedby="azimutManualRango" [attr.aria-invalid]="!azimutManual.validity.valid"><span
+                    aria-hidden="true">°</span></div>
+                <small id="azimutManualRango">Rango: 0° – 359.99°</small>
+              </div>
+              <div class="pieza-manual-field">
+                <label for="elevacionManual">ELEVACIÓN</label>
+                <div class="pieza-manual-input"><input #elevacionManual id="elevacionManual" type="number" step="0.01"
+                    min="-5" max="66" required [disabled]="!controlManualPieza.activo"
+                    [ngModelOptions]="{ standalone: true }" [ngModel]="valorCampoManualPieza('elevacion')"
+                    (ngModelChange)="actualizarCampoManualPieza('elevacion', $event)"
+                    (keydown.enter)="$event.preventDefault(); actualizarCampoManualPieza('elevacion', elevacionManual.valueAsNumber)"
+                    aria-describedby="elevacionManualRango" [attr.aria-invalid]="!elevacionManual.validity.valid"><span
+                    aria-hidden="true">°</span></div>
+                <small id="elevacionManualRango">Rango: -5° – 66°</small>
+              </div>
+            </div>
+          </div>
+          <figure class="instrument">
+            <svg viewBox="0 0 220 220" role="img" aria-label="Indicador de elevación de pieza" class="pieza-dial"
+              [class.pieza-dial--manual]="controlManualPieza.activo"
+              [class.pieza-dial--dragging]="arrastreManualPieza?.tipo === 'elevacion'"
+              (pointerdown)="iniciarArrastreElevacion($event)" (pointermove)="arrastrarControlManualPieza($event)"
+              (pointerup)="finalizarArrastreControlManualPieza($event)"
+              (pointercancel)="finalizarArrastreControlManualPieza($event)"
+              (lostpointercapture)="finalizarArrastreControlManualPieza($event)">
+              <circle cx="110" cy="110" r="103" class="instrument-rim" />
+              <circle cx="110" cy="110" r="85" class="elevation-ring" />
+              <path d="M110 26V122H196" class="instrument-guides" />
+              <circle cx="110" cy="110" r="79" class="instrument-inner" />
+              @if (sectorElevacionPieza(); as sector) {
+              <path [attr.d]="sector" class="elevation-sector" /> }
+              <g [attr.transform]="'rotate(' + rotacionElevacionPieza(elevacionVisualPiezaGrados()) + ' 110 122)'">
+                <path d="M110 122 L176 118 L176 126 Z" class="pieza-needle" />
+                <path d="M115 122 H169" class="pieza-needle-highlight" />
+              </g>
+              <circle cx="110" cy="122" r="8" class="pieza-pivot" />
+              <circle cx="110" cy="122" r="4" class="pieza-pivot-inner" />
+              <text x="153" y="89" class="elevation-angle">{{ elevacionVisualPiezaGrados() === null ? '--' :
+                formatGrados(elevacionVisualPiezaGrados()) }}</text>
+            </svg>
+            <figcaption>
+              <h4>{{ etiquetaElevacionPieza() }}</h4><strong>{{ formatMilsGrados(elevacionVisualPiezaMils(),
+                elevacionVisualPiezaGrados()) }}</strong>
+            </figcaption>
+          </figure>
+        </div>
+        <div class="pieza-status" [class.pieza-status--connected]="orientacionPieza.conectado"
+          [class.pieza-status--disconnected]="!orientacionPieza.conectado" role="status">
+          <span class="pieza-status__dot" aria-hidden="true"></span>
+          <strong>{{ orientacionPieza.conectado ? 'PIEZA CONECTADA' : 'PIEZA DESCONECTADA' }}</strong>
+        </div>
+        <div class="instrument-status pieza-reading-status"><span>DERIVA: <strong>--</strong></span><span>SOLUCIÓN:
+            <b>{{ orientacionPieza.tieneDatos ? 'DATOS RECIBIDOS' : 'SIN DATOS' }}</b></span></div>
+      </div>
+      <footer class="instrument-status">
+        <span>DERIVA: <strong>--</strong></span><span>SOLUCIÓN: <b>{{ simulacionTrayectoria ? 'SIMULACIÓN' : 'SIN DATOS'
+            }}</b></span>
+      </footer>
+    </section>
+
+    <section class="panel trajectory-panel" aria-labelledby="hm-trajectory-title" appFloatingPanel="profile" windowTitle="Perfil de trayectoria balística" [windowMinWidth]="380" [windowMinHeight]="280">
+      <header class="panel-heading trajectory-heading">
+        <h3 id="hm-trajectory-title"><i class="red-square" aria-hidden="true"></i> PERFIL DE TRAYECTORIA BALÍSTICA</h3>
+        <div class="trajectory-metadata"><span>{{ tieneRelacion() ? 'APOGEO: CALCULADO' : 'FIJE DOS PUNTOS PARA CALCULAR
+            LA TRAYECTORIA' }}</span></div>
+      </header>
+      <div class="profile-toggle" role="tablist" aria-label="Tipo de perfil">
+        <button type="button" [class.active]="tipoPerfilVisual() === 'trayectoria'"
+          (click)="seleccionarPerfil('trayectoria')" [disabled]="!simulacionTrayectoria">TRAYECTORIA</button>
+        <button type="button" [class.active]="tipoPerfilVisual() === 'terreno'" (click)="seleccionarPerfil('terreno')"
+          [disabled]="!simulacionTrayectoria">PERFIL DEL TERRENO</button>
+        <button type="button" [class.active]="tipoPerfilVisual() === 'combinado'"
+          (click)="seleccionarPerfil('combinado')" [disabled]="!simulacionTrayectoria">COMBINADO</button>
+      </div>
+      @if (calculandoTrayectoria) {
+      <div class="trajectory-chart">
+        <p>OBTENIENDO PERFIL DEL TERRENO...</p>
+      </div>
+      } @else if (simulacionTrayectoria && perfilMuestras().length) {
+      <div #terrainProfile class="trajectory-chart terrain-profile">
+        <svg viewBox="0 0 880 225" preserveAspectRatio="none" role="img" aria-label="Perfil del terreno entre P1 y P2"
+          (mousemove)="onPerfilPointerMove($event)" (mouseleave)="perfilHover.set(null)" (wheel)="onPerfilWheel($event)"
+          (pointerdown)="iniciarPanPerfil($event)" (pointermove)="moverPanPerfil($event)"
+          (pointerup)="terminarPanPerfil()" (pointercancel)="terminarPanPerfil()"
+          [class.profile-is-panning]="!!perfilPan">
+          <rect x="1" y="10" width="878" height="195" rx="4" class="chart-background" />
+          <path d="M40 35H840 M40 115H840 M40 195H840" class="chart-guides" />
+          @if (tipoPerfilVisual() !== 'trayectoria') {
+          <polygon [attr.points]="perfilArea()" class="terrain-area" />
+          <polyline [attr.points]="perfilPuntos()" class="terrain-profile-line" />
+          }
+          @if (tipoPerfilVisual() !== 'terreno') {
+          <polyline [attr.points]="trayectoriaPuntos()" class="trajectory-curve" />
+          <circle [attr.cx]="trayectoriaApogeo().x" [attr.cy]="trayectoriaApogeo().y" r="5" class="red-fill" />
+          <text [attr.x]="trayectoriaApogeo().x" [attr.y]="trayectoriaApogeo().y - 10" text-anchor="middle"
+            class="chart-end-label">APOGEO {{ simulacionTrayectoria.apogeo.altitud_visual_msnm | number:'1.0-0' }} m s.
+            n. m.</text>
+          }
+          <circle [attr.cx]="perfilX(perfilMuestras()[0])" [attr.cy]="perfilY(perfilMuestras()[0])" r="5"
+            class="blue-fill" />
+          <circle [attr.cx]="perfilX(perfilMuestras().at(-1)! )" [attr.cy]="perfilY(perfilMuestras().at(-1)! )" r="5"
+            class="red-fill" />
+          <text x="40" y="215" class="chart-start-label">P1</text><text x="840" y="215" text-anchor="end"
+            class="chart-end-label">P2</text>
+          @if (perfilHover(); as muestra) {
+          <g class="terrain-tooltip" [attr.transform]="'translate(' + perfilX(muestra) + ',' + perfilY(muestra) + ')'">
+            <circle r="4" />
+            <rect x="8" y="-48" width="190" height="42" rx="3" />
+            <text x="15" y="-31">{{ muestra.distancia_m | number:'1.0-0' }} m · {{ muestra.terreno_msnm | number:'1.0-0'
+              }} msnm</text>
+            <text x="15" y="-16">{{ muestra.latitud | number:'1.4-4' }}, {{ muestra.longitud | number:'1.4-4' }}</text>
+            @if (tipoPerfilVisual() === 'combinado') { <text x="15" y="-1">TRAY: {{
+              trayectoriaAltura(muestra.distancia_m) | number:'1.0-0' }} · SEP: {{
+              trayectoriaAltura(muestra.distancia_m) - muestra.terreno_msnm | number:'1.0-0' }} m</text> }
+          </g>
+          }
+        </svg>
+        <div class="profile-zoom-controls" aria-label="Controles de zoom del perfil">
+          <button type="button" (click)="cambiarZoom(-0.15)" title="Alejar">−</button>
+          <span>ZOOM {{ zoomPerfil() * 100 | number:'1.0-0' }}%</span>
+          <button type="button" (click)="restablecerZoom()" title="Restablecer">⟳</button>
+          <button type="button" (click)="cambiarZoom(0.15)" title="Acercar">+</button>
+          <button type="button" (click)="ajustarTodo()" title="Ajustar todo">⌗</button>
+        </div>
+        <div class="terrain-summary"><span>P1: {{ perfilMuestras()[0].terreno_msnm | number:'1.0-0' }}
+            msnm</span><span>MÍN: {{ simulacionTrayectoria.resumen_perfil.elevacion_minima_msnm | number:'1.0-0' }} ·
+            MÁX: {{ simulacionTrayectoria.resumen_perfil.elevacion_maxima_msnm | number:'1.0-0' }} · MEDIA: {{
+            simulacionTrayectoria.resumen_perfil.elevacion_media_msnm | number:'1.0-0' }}</span><span>P2: {{
+            perfilMuestras().at(-1)!.terreno_msnm | number:'1.0-0' }} msnm · DESNIVEL: {{
+            simulacionTrayectoria.resumen_perfil.desnivel_p1_p2_m | number:'1.0-0' }} m</span></div>
+      </div>
+      } @else if (tieneRelacion() && simulacionTrayectoria && tipoPerfilVisual() === 'trayectoria') {
+      <div class="trajectory-chart">
+        <svg viewBox="0 0 880 225" preserveAspectRatio="none" role="img"
+          aria-label="Curva ilustrativa estática entre dos puntos, sin simulación ni cálculo">
+          <rect x="1" y="10" width="878" height="195" rx="4" class="chart-background" />
+          <path d="M12 22H868 M12 109H868 M12 193H868" class="chart-guides" />
+          <path d="M12 193H868" class="chart-baseline" />
+          <path d="M440 40V193" class="apogee-guide" />
+          <path d="M12 193 Q440 -112 868 193" class="trajectory-curve" />
+          @if (simulacionTrayectoria) { <g class="apogee-label">
+            <rect x="382" y="22" width="116" height="25" rx="3" /><text x="440" y="39">APOGEO: {{
+              simulacionTrayectoria.apogeo.altura_visual_m }}m</text>
+          </g> }
+          <ellipse cx="12" cy="193" rx="7" ry="4" class="blue-fill" />
+          <ellipse cx="868" cy="193" rx="7" ry="4" class="red-fill" />
+          <text x="20" y="188" class="chart-start-label">POS-01 (0.0 km)</text>
+          <text x="860" y="188" text-anchor="end" class="chart-end-label">IMPACTO ({{
+            formatearDistancia(distanciaRelacion()) }})</text>
+        </svg>
+      </div>
+      } @else {
+      <div class="trajectory-chart">
+        <p>FIJE DOS PUNTOS PARA CALCULAR LA TRAYECTORIA</p>
+      </div>
+      }
+      @if (tieneRelacion()) { <footer class="panel-footer timeline"><span>T+00s
+          [DISPARO]</span><span>T+VÉRTICE</span><span>T+IMPACTO</span></footer> }
+    </section>
+
+    <section class="panel data-panel" aria-labelledby="hm-data-title" appFloatingPanel="firing-data" windowTitle="Datos de tiro">
+      <header class="panel-heading">
+        <h3 id="hm-data-title">DATOS DE TIRO</h3><span class="badge">{{ simulacionTrayectoria ? 'SIMULACIÓN' : 'SIN
+          DATOS' }}</span>
+      </header>
+      <dl class="data-cards">
+        <div class="data-card">
+          <dt>DISTANCIA</dt>
+          <dd>{{ simulacionTrayectoria ? formatearDistancia(simulacionTrayectoria.distancia_m) : '--' }}</dd>
+        </div>
+        <div class="data-card">
+          <dt>AZIMUT (DIREC.)</dt>
+          <dd class="green">{{ tieneRelacion() ? (azimut() * 6400 / 360).toFixed(0) + ' mils' : '--' }}</dd>
+        </div>
+        <div class="data-card">
+          <dt>ELEVACIÓN</dt>
+          <dd class="green">{{ simulacionTrayectoria ? ((simulacionTrayectoria.datos_simulados.angulo_visual_grados *
+            6400 / 360) | number:'1.0-0') + ' mils' : '--' }}</dd>
+        </div>
+        <div class="data-card">
+          <dt>CARGA PROP.</dt>
+          <dd class="amber">{{ simulacionTrayectoria ? 'CARGA ' + simulacionTrayectoria.datos_simulados.carga_simulada :
+            '--' }}</dd>
+        </div>
+        <div class="data-card">
+          <dt>TIEMPO VUELO</dt>
+          <dd class="red">{{ simulacionTrayectoria?.datos_simulados?.tiempo_vuelo_simulado_s != null ?
+            ((simulacionTrayectoria?.datos_simulados?.tiempo_vuelo_simulado_s | number:'1.1-1') + ' s') : '--' }}</dd>
+        </div>
+        <div class="data-card">
+          <dt>CORR. DERIVA</dt>
+          <dd>--</dd>
+        </div>
+      </dl>
+      <footer class="data-footer"><span>MUNICIÓN: <b>--</b></span><span class="badge red-badge">{{ simulacionTrayectoria
+          ? 'SIMULACIÓN' : 'SIN DATOS' }}</span></footer>
+    </section>
+  </div>
+
+  <footer class="console-footer">
+    <span>SYS-ID: VLCN-30-DEMO-7701</span>
+    <span>MAQUETA ESTÁTICA · DATOS FICTICIOS · SIN CÁLCULO</span>
+    <span>LAT: 40°25′08″N // LON: 03°41′31″W</span>
+  </footer>
+</section>

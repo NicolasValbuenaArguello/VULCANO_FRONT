@@ -1,0 +1,5 @@
+backend/data/
+backend/__pycache__/
+frontend/.angular/
+frontend/dist/
+frontend/out-tsc/

@@ -1,0 +1,59 @@
+<main class="home-page">
+  <div class="home-page__radar" aria-hidden="true"></div>
+  <section class="home-command" aria-labelledby="home-title">
+    <header class="home-hero">
+      <div class="home-hero__badge">RECONSTRUCCION &amp; EVOLUCION TACTICA // C4I HOME</div>
+      <p class="home-hero__eyebrow"><span></span> CENTRO DE APOYO DE FUEGOS // CAFUE <span></span></p>
+      <h1 id="home-title">HOME EJECUTIVO C4I <strong>// VULCANO 3.0</strong></h1>
+      <p class="home-hero__description">Plataforma de Intercambio Doctrinal, Lecciones Aprendidas y Enlace Tactico Operacional en Tiempo Real</p>
+      <span class="home-hero__reference">SEC: VUL-HOME-02</span>
+    </header>
+
+    <section class="home-grid" aria-label="Foro y chat operacional">
+      <article class="tactical-panel forum-panel">
+        <header class="panel-header">
+          <div><span class="panel-square" aria-hidden="true"></span><h2>FORO TACTICO // DOCTRINA<br />&amp; LECCIONES APRENDIDAS</h2></div>
+          <div class="panel-meta"><span>MODO: <b>DEBATE</b></span><span>REF: FORO-ML</span></div>
+        </header>
+        <div class="forum-tools">
+          <div class="filter-list">
+            @for (filtro of foroFiltros; track filtro; let first = $first) { <button type="button" class="filter-button" [class.is-selected]="first">{{ filtro }}</button> }
+          </div>
+          <button type="button" class="new-topic">⊕ NUEVO TEMA</button>
+        </div>
+        <label class="forum-search"><span aria-hidden="true">⌕</span><input type="text" placeholder="BUSCAR DOCTRINA, CALIBRE, TABLAS O LECCIONES CLAVE..." disabled /><kbd>CTRL+K</kbd></label>
+        <div class="forum-list">
+          @for (tema of foroMock; track tema.titulo; let i = $index) {
+            <article class="forum-item" [class.is-featured]="tema.destacado">
+              <div class="forum-item__top"><span>{{ tema.categoria }}</span>@if (tema.destacado) { <b>DESTACADO</b> }<small>REF: {{ i + 1 }}</small></div>
+              <h3>{{ tema.titulo }}</h3>
+              <div class="forum-item__bottom"><span>ULTIMO APORTE: <b>{{ tema.autor }}</b></span><span>{{ tema.fecha }} <b>▣ {{ tema.respuestas }}</b></span></div>
+            </article>
+          }
+        </div>
+        <footer class="forum-pagination"><span>MOSTRANDO 1-4 DE 27 EXPEDIENTES</span><div><button type="button">&lt;</button><button type="button" class="is-current">1</button><button type="button">2</button><button type="button">3</button><button type="button">&gt;</button></div></footer>
+      </article>
+
+      <article class="tactical-panel chat-panel">
+        <header class="panel-header">
+          <div><span class="panel-square" aria-hidden="true"></span><h2>CHAT OPERACIONAL C4I //<br /> ENLACE SEGURO</h2></div>
+          <div class="panel-meta"><span class="security-badge">AES-GCM 256<br />/ SHA-512</span><span>REF: C4I-CHAT-SEC</span></div>
+        </header>
+        <div class="channel-list">
+          @for (canal of canalesChat; track canal; let first = $first) { <button type="button" class="channel-button" [class.is-selected]="first">● {{ canal }}</button> }
+        </div>
+        <div class="chat-messages">
+          @for (mensaje of chatMock; track mensaje.hora) {
+            <article class="chat-message">
+              <header><span>{{ mensaje.hora }}</span><b>{{ mensaje.usuario }}</b><small>// {{ mensaje.rol }}</small>@if (mensaje.etiqueta) { <em>{{ mensaje.etiqueta }}</em> }</header>
+              <p>{{ mensaje.mensaje }}</p>
+            </article>
+          }
+        </div>
+        <div class="chat-compose"><input type="text" placeholder="Escribir mensaje cifrado en canal seleccionado..." disabled /><div><button type="button">◉ COORD MGRS</button><button type="button">▣ DOC MIL</button><button type="button">↯ CRYPT ON</button><button type="button" class="transmit">TRANSMITIR ▶</button></div></div>
+      </article>
+    </section>
+
+    <footer class="home-footer"><span><i></i> SESION ACTIVA: ADMIN</span><span>// CANAL SEGURO ACTIVO</span><span class="home-footer__mode">MODO: INTERFAZ DIVIDIDA</span><strong>CAFUE VULCANO 3.0</strong></footer>
+  </section>
+</main>

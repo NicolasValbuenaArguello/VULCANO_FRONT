@@ -1,0 +1,199 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+.mapa-3d-container {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+.terrain-baseline-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 500;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.dem-debug-panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid rgba(157, 170, 85, 0.28);
+  border-radius: 12px;
+  background: rgba(6, 9, 6, 0.88);
+  color: #eef1e9;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.dem-debug-panel__title {
+  margin-bottom: 0.65rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #dce79a;
+}
+
+.dem-debug-panel__status {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #eef1e9;
+}
+
+.dem-debug-panel__actions {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.dem-debug-panel button {
+  border: 1px solid rgba(157, 170, 85, 0.28);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  background: rgba(18, 23, 18, 0.96);
+  color: #eef1e9;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dem-debug-panel button:hover {
+  border-color: rgba(157, 170, 85, 0.5);
+  background: rgba(28, 35, 28, 0.98);
+}
+
+.dem-debug-panel__conclusion {
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #dce79a;
+}
+
+.dem-debug-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #e3e5df;
+}
+
+.baseline-debug-panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 600;
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid rgba(74, 160, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(6, 10, 18, 0.88);
+  color: #eef1e9;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.baseline-debug-panel__title {
+  margin-bottom: 0.65rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #96c7ff;
+}
+
+.baseline-debug-panel__status {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #eef1e9;
+}
+
+.baseline-debug-panel__actions {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.baseline-debug-panel button {
+  border: 1px solid rgba(74, 160, 255, 0.28);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  background: rgba(14, 24, 39, 0.96);
+  color: #eef1e9;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.baseline-debug-panel button:hover {
+  border-color: rgba(74, 160, 255, 0.5);
+  background: rgba(21, 35, 56, 0.98);
+}
+
+.baseline-debug-panel__conclusion {
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #96c7ff;
+}
+
+.baseline-debug-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #e3e5df;
+}
+
+.mapa-3d-status {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 5;
+  max-width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(157, 170, 85, 0.22);
+  border-radius: 10px;
+  background: rgba(6, 9, 6, 0.82);
+  color: #e3e5df;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.mapa-3d-status--error {
+  border-color: rgba(214, 94, 94, 0.32);
+  background: rgba(54, 18, 18, 0.9);
+}

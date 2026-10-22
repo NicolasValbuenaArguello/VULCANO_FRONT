@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: #050805;
+}
+
+.app-layout {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

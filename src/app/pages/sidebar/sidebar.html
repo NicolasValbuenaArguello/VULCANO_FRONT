@@ -1,0 +1,190 @@
+<nav class="vulcano-navbar" aria-label="Navegación principal">
+  <div class="navbar-brand">
+    <img
+      src="/assets/primer_logo_vulcano.png"
+      alt="Vulcano"
+      class="navbar-logo"
+    />
+    <div class="navbar-brand__copy">
+      <div class="navbar-brand__title">VULCANO <span>3.0</span></div>
+      <div class="navbar-brand__subtitle">SISTEMA C4I ARTILLERIA // CAUFE</div>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="navbar-mobile-toggle"
+    (click)="toggleMobileMenu()"
+    [attr.aria-expanded]="mobileMenuOpen"
+    aria-controls="navbar-mobile-panel"
+    aria-label="Abrir o cerrar menú"
+  >
+    <span aria-hidden="true">☰</span>
+  </button>
+
+  <div class="navbar-menu" [class.navbar-menu--open]="mobileMenuOpen">
+    @for (item of menuItems; track item.name) {
+      @if (canShowItem(item)) {
+        @if (!hasVisibleChildren(item)) {
+          <a
+            class="nav-item"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            (click)="onMobileNavigate()"
+          >
+            {{ item.name }}
+          </a>
+        } @else {
+          <div class="nav-dropdown" [class.is-open]="isDropdownOpen(item.name)">
+            <button
+              type="button"
+              class="nav-item dropdown-trigger"
+              (click)="toggleDropdown(item.name)"
+              (keydown)="onDropdownTriggerKeydown($event, item)"
+              [attr.aria-expanded]="isDropdownOpen(item.name)"
+              aria-haspopup="menu"
+            >
+              <span>{{ item.name }}</span>
+              <span class="dropdown-arrow" aria-hidden="true">▼</span>
+            </button>
+
+            <div class="dropdown-menu" role="menu">
+              @for (child of getVisibleChildren(item); track child.name) {
+                <a
+                  class="dropdown-item"
+                  [routerLink]="child.route"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="onDropdownLinkClick(); onMobileNavigate()"
+                >
+                  {{ child.name }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+  </div>
+
+  <div class="navbar-user">
+    @if (authService.currentUser()) {
+      <span class="navbar-user__status" aria-hidden="true"></span>
+      <div class="navbar-user__info">
+        <span class="navbar-user__name">
+          {{ authService.currentUser()?.usuario }}
+        </span>
+        <span class="navbar-user__role">
+          {{ authService.getRole() }}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        class="navbar-user__logout"
+        title="Cerrar sesión"
+        aria-label="Cerrar sesión"
+        (click)="logout()"
+      >
+        SALIR
+      </button>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="navbar-mobile-toggle"
+    (click)="toggleMobileMenu()"
+    [attr.aria-expanded]="mobileMenuOpen"
+    aria-controls="navbar-mobile-panel"
+    aria-label="Abrir o cerrar menú"
+  >
+    <span aria-hidden="true">☰</span>
+  </button>
+
+  <div class="navbar-telemetry" aria-label="Estado del sistema">
+    <span class="navbar-telemetry__dot" aria-hidden="true"></span>
+    <span>ONLINE</span>
+    <strong>16:22:28Z</strong>
+  </div>
+</nav>
+
+<div class="navbar-statusbar" aria-label="Informacion operativa">
+  <span><i aria-hidden="true"></i> NODO ART-01 CONECTADO</span>
+  <span>COORD: MGRS 84 / UTM ZONE 18N</span>
+  <span class="navbar-statusbar__classification">DEFCON 4 // MODO OPERATIVO</span>
+</div>
+
+<div
+  id="navbar-mobile-panel"
+  class="navbar-mobile-panel"
+  [class.navbar-mobile-panel--open]="mobileMenuOpen"
+>
+  @if (authService.currentUser()) {
+    <div class="navbar-mobile-user">
+      <div class="navbar-user__info">
+        <span class="navbar-user__name">
+          {{ authService.currentUser()?.usuario }}
+        </span>
+        <span class="navbar-user__role">
+          {{ authService.getRole() }}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        class="navbar-user__logout navbar-user__logout--mobile"
+        title="Cerrar sesión"
+        aria-label="Cerrar sesión"
+        (click)="logout(); onMobileNavigate()"
+      >
+        Salir
+      </button>
+    </div>
+  }
+
+  @for (item of menuItems; track item.name) {
+    @if (canShowItem(item)) {
+      <div class="mobile-item">
+        @if (!hasVisibleChildren(item)) {
+          <a
+            class="mobile-link"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            (click)="onMobileNavigate()"
+          >
+            {{ item.name }}
+          </a>
+        } @else {
+          <button
+            type="button"
+            class="mobile-link mobile-link--trigger"
+            (click)="toggleDropdown(item.name)"
+            [attr.aria-expanded]="isDropdownOpen(item.name)"
+          >
+            <span>{{ item.name }}</span>
+            <span class="dropdown-arrow" aria-hidden="true">▼</span>
+          </button>
+
+          @if (isDropdownOpen(item.name)) {
+            <div class="mobile-children">
+              @for (child of getVisibleChildren(item); track child.name) {
+                <a
+                  class="mobile-sublink"
+                  [routerLink]="child.route"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="onMobileNavigate()"
+                >
+                  {{ child.name }}
+                </a>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+</div>

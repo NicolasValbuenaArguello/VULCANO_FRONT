@@ -1,0 +1,23 @@
+:host { display: block; color: #182b3c; background: #f5f7fa; font: 15px/1.5 system-ui, sans-serif; min-height: 100vh; }
+* { box-sizing: border-box; }
+main { max-width: 1180px; margin: auto; padding: 32px 24px; }
+h1 { font-size: 36px; margin: 4px 0; } h2 { font-size: 20px; margin: 0 0 18px; } h3 { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #42657d; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 24px; align-items: start; }
+form, .records { background: white; border: 1px solid #dbe2e8; border-radius: 12px; padding: 24px; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+label { display: block; margin: 16px 0 5px; font-weight: 600; }
+input, textarea { font: inherit; width: 100%; border: 1px solid #9cadba; border-radius: 6px; padding: 10px; background: white; color: inherit; }
+textarea { resize: vertical; }
+button { font: inherit; border: 1px solid #17557a; border-radius: 6px; padding: 8px 12px; cursor: pointer; background: #17557a; color: white; }
+button.secondary { background: white; color: #17557a; } button.danger { color: #a22424; border-color: #cb9090; }
+button:disabled, fieldset:disabled { opacity: .6; cursor: wait; }
+:focus-visible { outline: 3px solid #6ca7d4; outline-offset: 2px; }
+.coordinates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.actions, .list-header { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .actions { margin-top: 18px; }
+.list-header { justify-content: space-between; margin-bottom: 14px; } .list-header h2 { margin: 0; }
+.messages { min-height: 50px; } .success { color: #15623a; } .error { color: #a22424; }
+ul { list-style: none; padding: 0; margin: 0; } li { border-top: 1px solid #dbe2e8; padding: 20px 0; overflow-wrap: anywhere; } li:last-child { padding-bottom: 0; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 12px; } dd { margin: 0; } dt { font-weight: 700; }
+.coordinates-value { font-family: monospace; font-size: 16px; } .confirmation { padding: 12px; background: #fff4e6; border-radius: 6px; }
+@media (max-width: 740px) { .layout { grid-template-columns: 1fr; } main { padding: 18px 12px; } form, .records { padding: 18px; } }
