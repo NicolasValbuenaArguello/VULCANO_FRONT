@@ -1,0 +1,123 @@
+{
+  "fecha_revision": "2026-10-27",
+  "historial": [
+    "961b545|2026-10-22T09:06:55-05:00|Excluir modelo OBJ pesado del repositorio",
+    "b33a1d2|2026-10-22T08:59:34-05:00|se sube todo todo el proyecto",
+    "0630bd0|2026-08-10T14:08:50-05:00|initial commit"
+  ],
+  "historial_auth": [
+    "b33a1d2 se sube todo todo el proyecto"
+  ],
+  "estado_archivos": [
+    " M src/app/core/auth/README.md",
+    " M src/app/core/auth/auth.guard.ts",
+    " M src/app/core/auth/auth.models.ts",
+    " M src/app/core/auth/auth.service.ts",
+    " M src/app/core/auth/guest.guard.ts",
+    " M src/app/core/interceptors/auth.interceptor.ts",
+    " M src/app/core/interceptors/error.interceptor.ts",
+    " M src/app/core/services/api-config.service.ts",
+    " M src/app/core/services/api-connection.spec.ts",
+    " M src/app/core/services/navigation.service.ts",
+    " M src/app/layout/app-shell.ts",
+    " M src/app/pages/home/home.css",
+    " M src/app/pages/home/home.html",
+    " M src/app/pages/home/home.ts",
+    " M src/app/pages/login/login.component.css",
+    " M src/app/pages/login/login.component.html",
+    " M src/app/pages/login/login.component.spec.ts",
+    " M src/app/pages/login/login.component.ts",
+    " M src/app/pages/sidebar/sidebar.html",
+    " M src/app/pages/sidebar/sidebar.spec.ts",
+    " M src/app/pages/sidebar/sidebar.ts",
+    " M src/app/pages/terrain-minimal-test/terrain-minimal-test.ts",
+    " M src/app/pages/vulcano/hoja-milimetrada/hoja-milimetrada.component.html",
+    " M src/app/pages/vulcano/hoja-milimetrada/hoja-milimetrada.component.ts",
+    " M src/app/pages/vulcano/mapa-tres-d/mapa-tres-d.spec.ts",
+    " M src/app/pages/vulcano/mapa-tres-d/mapa-tres-d.ts",
+    " M src/app/pages/vulcano/menu/menu.html",
+    " M src/app/pages/vulcano/menu/menu.spec.ts",
+    " M src/app/pages/vulcano/menu/menu.ts",
+    " M src/app/pages/vulcano/vulcano.html",
+    " M src/app/pages/vulcano/vulcano.spec.ts",
+    " M src/app/pages/vulcano/vulcano.ts",
+    " M src/app/shared/components/map-context-menu/map-actions.service.ts",
+    " M src/app/shared/components/map-context-menu/map-context-menu.spec.ts",
+    " M src/app/shared/components/map-layers/map-layers.css",
+    " M src/app/shared/components/map-layers/map-layers.spec.ts",
+    " M src/app/shared/components/mapa/mapa.ts",
+    " M src/environments/environment.shared.ts",
+    "?? docs/",
+    "?? documentacion_tecnica/",
+    "?? src/app/core/auth/auth-response.validator.ts",
+    "?? src/app/core/auth/auth-test.fixture.ts",
+    "?? src/app/core/auth/authorization-policy.spec.ts",
+    "?? src/app/core/auth/authorization-policy.ts",
+    "?? src/app/core/auth/catalogos.service.ts",
+    "?? src/app/core/auth/login-contract.spec.ts",
+    "?? src/app/core/auth/logout.spec.ts",
+    "?? src/app/layout/app-shell.spec.ts",
+    "?? src/app/pages/vulcano/menu-sistemas/",
+    "?? src/app/pages/vulcano/pages_sistemas/",
+    "?? src/app/pages/vulcano/ventana-limites-seguridad/",
+    "?? src/app/pages/vulcano/ventana-sistemas-artilleria/",
+    "?? src/app/shared/components/topography-background/",
+    "?? src/app/shared/components/window-workspace/floating-window-base.ts",
+    "?? src/app/shared/models/cartography.model.ts",
+    "?? src/app/shared/services/cartography-config.service.spec.ts",
+    "?? src/app/shared/services/cartography-config.service.ts"
+  ],
+  "versiones_instaladas": {
+    "@angular/core": "21.2.19",
+    "@angular/cli": "21.2.20",
+    "rxjs": "7.8.2",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  },
+  "openapi": {
+    "origen": "http://127.0.0.1:8010/openapi.json",
+    "sha256": "2c961f9028954aab33fba4d434554b11e46459b8c4bd470da755816b04b6ce5d",
+    "titulo": "Servidor VULCANO",
+    "version": "2.0.0",
+    "rutas_auth": {
+      "/token": {
+        "post": {
+          "operationId": "login_token_post",
+          "requestBody": {
+            "content": {
+              "application/x-www-form-urlencoded": {
+                "schema": {
+                  "$ref": "#/components/schemas/Body_login_token_post"
+                }
+              }
+            },
+            "required": true
+          },
+          "security": null,
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rutas_v1_presentes": [],
+    "nota": "Consulta de contrato, sin enviar credenciales. No acredita comportamiento de autenticacion real."
+  }
+}

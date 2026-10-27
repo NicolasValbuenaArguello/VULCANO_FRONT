@@ -1,3 +1,5 @@
+> Actualizacion del contrato POST /token (27/10/2026): ver [informe vigente](../../../../docs/login-contrato-fastapi.md). Las referencias historicas siguientes a token_type/expires_in, api_key y restauracion desde localStorage han sido sustituidas por el contrato nuevo y sesion solo en memoria.
+
 # Auth Architecture
 
 Este directorio concentra la arquitectura base de autenticacion del frontend Angular.
@@ -158,9 +160,17 @@ Agregar una ruta protegida nueva es simple:
 - elimina `usuario`
 - elimina `api_key`
 - limpia el estado reactivo
-- redirige a `/login`
+- elimina las claves propias de autenticacion de `localStorage` y `sessionStorage`
+- cancela el login pendiente y descarta respuestas exitosas de generaciones anteriores
+- ejecuta las limpiezas privadas registradas por AppShell sin cambiar servicios operacionales
+- elimina cookies visibles con los nombres propios conocidos cuando su path lo permite
+- redirige a `/login` con `replaceUrl: true`; devuelve una Promise y evita cierres simultaneos
 
 No usa `localStorage.clear()`.
+
+El backend actual no publica logout ni refresh (ver `CONFIGURACION_VULCANO.md`):
+el cierre local no revoca un JWT emitido ni elimina cookies HttpOnly.
+Detalles, pruebas y limites: [docs/cierre-sesion.md](../../../../docs/cierre-sesion.md).
 
 ## Sesion al recargar
 

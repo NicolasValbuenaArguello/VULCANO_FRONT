@@ -25,7 +25,9 @@
   <div class="navbar-menu" [class.navbar-menu--open]="mobileMenuOpen">
     @for (item of menuItems; track item.name) {
       @if (canShowItem(item)) {
-        @if (!hasVisibleChildren(item)) {
+        @if (item.action === 'logout') {
+          <button type="button" class="nav-item" (click)="logout()" [disabled]="authService.loggingOut()">{{ item.name }}</button>
+        } @else if (!hasVisibleChildren(item)) {
           <a
             class="nav-item"
             [routerLink]="item.route"
@@ -73,7 +75,7 @@
       <span class="navbar-user__status" aria-hidden="true"></span>
       <div class="navbar-user__info">
         <span class="navbar-user__name">
-          {{ authService.currentUser()?.usuario }}
+          {{ authService.currentUser()?.grado }} {{ authService.obtenerNombreCompleto() }}
         </span>
         <span class="navbar-user__role">
           {{ authService.getRole() }}
@@ -125,7 +127,7 @@
     <div class="navbar-mobile-user">
       <div class="navbar-user__info">
         <span class="navbar-user__name">
-          {{ authService.currentUser()?.usuario }}
+          {{ authService.currentUser()?.grado }} {{ authService.obtenerNombreCompleto() }}
         </span>
         <span class="navbar-user__role">
           {{ authService.getRole() }}
@@ -147,7 +149,9 @@
   @for (item of menuItems; track item.name) {
     @if (canShowItem(item)) {
       <div class="mobile-item">
-        @if (!hasVisibleChildren(item)) {
+        @if (item.action === 'logout') {
+          <button type="button" class="mobile-link" (click)="logout()" [disabled]="authService.loggingOut()">{{ item.name }}</button>
+        } @else if (!hasVisibleChildren(item)) {
           <a
             class="mobile-link"
             [routerLink]="item.route"

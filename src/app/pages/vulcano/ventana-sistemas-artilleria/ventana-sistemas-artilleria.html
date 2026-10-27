@@ -1,0 +1,62 @@
+﻿<section class="systems-window" role="dialog" aria-label="SISTEMAS DE ARTILLERÍA" [style.left.px]="rect.x"
+  [style.top.px]="rect.y" [style.width.px]="rect.width"
+  [style.height.px]="manager.get(id)!.minimized ? null : rect.height" [style.z-index]="zIndex"
+  (pointerdown)="activated.emit(); $event.stopPropagation()" (wheel)="$event.stopPropagation()"
+  (dblclick)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+  <header class="floating-window__header" (pointerdown)="startPointer($event)">
+    <span class="floating-window__title">SISTEMAS DE ARTILLERÍA</span>
+    <div class="systems-actions" (pointerdown)="$event.stopPropagation()">
+      <button type="button" class="floating-window__close"
+        [attr.aria-label]="manager.get(id)!.minimized ? 'Restaurar ventana' : 'Minimizar ventana'"
+        [title]="manager.get(id)!.minimized ? 'Restaurar' : 'Minimizar'"
+        (click)="manager.get(id)!.minimized ? restore() : minimize()">{{ manager.get(id)!.minimized ? '↗' : '—'
+        }}</button>
+      <button type="button" class="floating-window__close"
+        [attr.aria-label]="manager.get(id)!.maximized ? 'Restaurar tamaño' : 'Maximizar ventana'"
+        [title]="manager.get(id)!.maximized ? 'Restaurar tamaño' : 'Maximizar'" (click)="toggleMaximize()">{{
+        manager.get(id)!.maximized ? '❐' : '□' }}</button>
+      <button type="button" class="floating-window__close" aria-label="Cerrar ventana" title="Cerrar"
+        (click)="close()">✕</button>
+    </div>
+  </header>
+  <div class="floating-window__content" [hidden]="manager.get(id)!.minimized">
+    <app-menu-sistemas [menuSeleccionado]="componenteActivo"
+      (cambioMenu)="cambiarComponente($event)"></app-menu-sistemas>
+    <section id="sistemas-contenido" class="contenido-sistema" role="tabpanel" tabindex="0"
+      [attr.aria-labelledby]="'sistemas-tab-' + componenteActivo" [attr.data-componente]="opcionActiva.componente">
+      @switch (componenteActivo) {
+      @case ('graficar-piezas') {
+      <app-piezas></app-piezas>
+      }
+      @case ('ver-piezas') {
+      <app-ver-piezas></app-ver-piezas>
+      }
+      @case ('ver-plan') {
+      <app-ver-planes></app-ver-planes>
+      }
+      @case ('crear-plan') {
+      <app-crear-planes></app-crear-planes>
+      }
+      @case ('trabajos-crear') {
+      <app-crear-trabajos></app-crear-trabajos>
+      }
+      @case ('trabajos-ver') {
+      <app-ver-trabajos></app-ver-trabajos>
+      }
+
+      @default {
+      <div class="contenido-provisional" aria-live="polite">
+        <h2>{{ opcionActiva.titulo }}</h2>
+        <p>Componente pendiente de implementación</p>
+      </div>
+      }
+      }
+    </section>
+  </div>
+  @if (!manager.get(id)!.minimized && !manager.get(id)!.maximized) {
+  @for (edge of edges; track edge) {
+  <div [class]="'systems-resize systems-resize--' + edge" aria-hidden="true" (pointerdown)="startPointer($event, edge)">
+  </div>
+  }
+  }
+</section>

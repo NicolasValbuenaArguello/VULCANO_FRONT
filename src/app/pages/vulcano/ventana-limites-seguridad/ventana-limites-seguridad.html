@@ -1,0 +1,34 @@
+﻿<section #dialog tabindex="-1" class="systems-window" role="dialog" aria-label="LÍMITES DE SEGURIDAD" [style.left.px]="rect.x"
+  [style.top.px]="rect.y" [style.width.px]="rect.width"
+  [style.height.px]="manager.get(id)!.minimized ? null : rect.height" [style.z-index]="zIndex"
+  (pointerdown)="activated.emit(); $event.stopPropagation()" (wheel)="$event.stopPropagation()"
+  (dblclick)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+  <header class="floating-window__header" (pointerdown)="startPointer($event)">
+    <span class="floating-window__title">LÍMITES DE SEGURIDAD</span>
+    <div class="systems-actions" (pointerdown)="$event.stopPropagation()">
+      <button type="button" class="floating-window__close"
+        [attr.aria-label]="manager.get(id)!.minimized ? 'Restaurar ventana' : 'Minimizar ventana'"
+        [title]="manager.get(id)!.minimized ? 'Restaurar' : 'Minimizar'"
+        (click)="manager.get(id)!.minimized ? restore() : minimize()">{{ manager.get(id)!.minimized ? '↗' : '—'
+        }}</button>
+      <button type="button" class="floating-window__close"
+        [attr.aria-label]="manager.get(id)!.maximized ? 'Restaurar tamaño' : 'Maximizar ventana'"
+        [title]="manager.get(id)!.maximized ? 'Restaurar tamaño' : 'Maximizar'" (click)="toggleMaximize()">{{
+        manager.get(id)!.maximized ? '❐' : '□' }}</button>
+      <button type="button" class="floating-window__close" aria-label="Cerrar ventana" title="Cerrar"
+        (click)="close()">✕</button>
+    </div>
+  </header>
+  <div class="floating-window__content" [hidden]="manager.get(id)!.minimized">
+    <div class="limits-placeholder">
+      <h2>Módulo de límites de seguridad</h2>
+      <p>Espacio reservado para futuras funcionalidades.</p>
+    </div>
+  </div>
+  @if (!manager.get(id)!.minimized && !manager.get(id)!.maximized) {
+  @for (edge of edges; track edge) {
+  <div [class]="'systems-resize systems-resize--' + edge" aria-hidden="true" (pointerdown)="startPointer($event, edge)">
+  </div>
+  }
+  }
+</section>

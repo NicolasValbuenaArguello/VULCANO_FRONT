@@ -1,0 +1,541 @@
+[
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "sessionGeneration",
+    "entrada": "",
+    "retorno": "number",
+    "linea": 41
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "registerSessionCleanup",
+    "entrada": "cleanup: () => void",
+    "retorno": "() => void",
+    "linea": 46
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "constructor",
+    "entrada": "private readonly http: HttpClient, private readonly apiConfig: ApiConfigService, private readonly router: Router, private readonly catalogos: CatalogosService",
+    "retorno": "inferido por TypeScript",
+    "linea": 56
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "login",
+    "entrada": "usuario: string, password: string",
+    "retorno": "Observable<LoginResponse>",
+    "linea": 70
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "logout",
+    "entrada": "",
+    "retorno": "Promise<void>",
+    "linea": 83
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "isAuthenticated",
+    "entrada": "",
+    "retorno": "boolean",
+    "linea": 99
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "getToken",
+    "entrada": "",
+    "retorno": "string | null",
+    "linea": 108
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "getApiKey",
+    "entrada": "",
+    "retorno": "string | null",
+    "linea": 113
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "getCurrentUser",
+    "entrada": "",
+    "retorno": "AuthUser | null",
+    "linea": 118
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "getRole",
+    "entrada": "",
+    "retorno": "string | null",
+    "linea": 123
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "obtenerUsuario",
+    "entrada": "",
+    "retorno": "AuthUser | null",
+    "linea": 128
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "obtenerNombreCompleto",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 130
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "obtenerRol",
+    "entrada": "",
+    "retorno": "string | null",
+    "linea": 135
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "obtenerPermisos",
+    "entrada": "",
+    "retorno": "string[]",
+    "linea": 137
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "tienePermiso",
+    "entrada": "codigo: string",
+    "retorno": "boolean",
+    "linea": 141
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "tieneRol",
+    "entrada": "rol: string",
+    "retorno": "boolean",
+    "linea": 144
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "obtenerFotoUsuario",
+    "entrada": "",
+    "retorno": "string | null",
+    "linea": 147
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "loginWithMock",
+    "entrada": "usuario: string, password: string",
+    "retorno": "Observable<LoginResponse>",
+    "linea": 157
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "loginWithBackend",
+    "entrada": "usuario: string, password: string",
+    "retorno": "Observable<LoginResponse>",
+    "linea": 179
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "applySession",
+    "entrada": "session: AuthSession",
+    "retorno": "void",
+    "linea": 207
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "clearSession",
+    "entrada": "redirectToLogin = false, cancelPending = true",
+    "retorno": "void",
+    "linea": 219
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "mapLoginResponse",
+    "entrada": "response: LoginResponse",
+    "retorno": "AuthSession",
+    "linea": 244
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "canUseMockAuth",
+    "entrada": "",
+    "retorno": "boolean",
+    "linea": 253
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "removeValue",
+    "entrada": "key: string",
+    "retorno": "void",
+    "linea": 258
+  },
+  {
+    "archivo": "src/app/core/auth/auth.service.ts",
+    "nombre": "clearAuthenticationCookies",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 266
+  },
+  {
+    "archivo": "src/app/core/auth/auth-response.validator.ts",
+    "nombre": "validarLogin",
+    "entrada": "v: unknown",
+    "retorno": "asserts v is LoginResponse",
+    "linea": 12
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "cargar",
+    "entrada": "catalogos: CatalogosLogin",
+    "retorno": "void",
+    "linea": 11
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "limpiar",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 13
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "unidades",
+    "entrada": "",
+    "retorno": "UnidadMilitar[]",
+    "linea": 14
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "obtenerPrincipales",
+    "entrada": "",
+    "retorno": "UnidadMilitar[]",
+    "linea": 16
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "obtenerSubordinadas",
+    "entrada": "id: number",
+    "retorno": "UnidadMilitar[]",
+    "linea": 19
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "buscarPorId",
+    "entrada": "id: number",
+    "retorno": "UnidadMilitar | undefined",
+    "linea": 22
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "buscarPorCodigo",
+    "entrada": "codigo: string",
+    "retorno": "UnidadMilitar | undefined",
+    "linea": 25
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "obtenerSuperior",
+    "entrada": "id: number",
+    "retorno": "UnidadMilitar | undefined",
+    "linea": 28
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "construirJerarquia",
+    "entrada": "",
+    "retorno": "NodoUnidad[]",
+    "linea": 34
+  },
+  {
+    "archivo": "src/app/core/auth/catalogos.service.ts",
+    "nombre": "obtenerRuta",
+    "entrada": "id: number",
+    "retorno": "UnidadMilitar[]",
+    "linea": 48
+  },
+  {
+    "archivo": "src/app/core/auth/authorization-policy.ts",
+    "nombre": "tienePermisoNumerico",
+    "entrada": "contexto: ContextoAutorizacion, id: number",
+    "retorno": "boolean",
+    "linea": 17
+  },
+  {
+    "archivo": "src/app/core/auth/authorization-policy.ts",
+    "nombre": "tieneAlgunPermisoNumerico",
+    "entrada": "contexto: ContextoAutorizacion, ids: readonly number[]",
+    "retorno": "boolean",
+    "linea": 29
+  },
+  {
+    "archivo": "src/app/core/auth/authorization-policy.ts",
+    "nombre": "tieneTodosLosPermisosNumericos",
+    "entrada": "contexto: ContextoAutorizacion, ids: readonly number[]",
+    "retorno": "boolean",
+    "linea": 35
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "authBaseUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 13
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "usuariosBaseUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 17
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "archivosBaseUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 21
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "operacionesBaseUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 25
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "loginUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 29
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "logoutUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 33
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "refreshTokenUrl",
+    "entrada": "",
+    "retorno": "string",
+    "linea": 37
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "isBackendUrl",
+    "entrada": "url: string",
+    "retorno": "boolean",
+    "linea": 43
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "isAuthEndpoint",
+    "entrada": "url: string",
+    "retorno": "boolean",
+    "linea": 48
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "isLoginEndpoint",
+    "entrada": "url: string",
+    "retorno": "boolean",
+    "linea": 54
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "getApiBaseUrl",
+    "entrada": "service: keyof BackendMap",
+    "retorno": "string",
+    "linea": 60
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "getBackendMap",
+    "entrada": "",
+    "retorno": "BackendMap",
+    "linea": 65
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "getBackendBases",
+    "entrada": "",
+    "retorno": "string[]",
+    "linea": 69
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "joinUrl",
+    "entrada": "baseUrl: string, path: string",
+    "retorno": "string",
+    "linea": 79
+  },
+  {
+    "archivo": "src/app/core/services/api-config.service.ts",
+    "nombre": "matchesBaseUrl",
+    "entrada": "url: string, baseUrl: string",
+    "retorno": "boolean",
+    "linea": 85
+  },
+  {
+    "archivo": "src/app/core/services/navigation.service.ts",
+    "nombre": "constructor",
+    "entrada": "",
+    "retorno": "inferido por TypeScript",
+    "linea": 26
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "openLogin",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 104
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "closeLogin",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 109
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "togglePassword",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 114
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "login",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 120
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "usuarioInvalid",
+    "entrada": "",
+    "retorno": "boolean",
+    "linea": 161
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "passwordInvalid",
+    "entrada": "",
+    "retorno": "boolean",
+    "linea": 166
+  },
+  {
+    "archivo": "src/app/pages/login/login.component.ts",
+    "nombre": "objetivosCount",
+    "entrada": "",
+    "retorno": "number",
+    "linea": 171
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "toggleDropdown",
+    "entrada": "name: string",
+    "retorno": "void",
+    "linea": 105
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "closeMenus",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 109
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "isDropdownOpen",
+    "entrada": "name: string",
+    "retorno": "boolean",
+    "linea": 114
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "onDropdownTriggerKeydown",
+    "entrada": "event: KeyboardEvent, item: MenuItem",
+    "retorno": "void",
+    "linea": 118
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "onDropdownLinkClick",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 137
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "toggleMobileMenu",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 145
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "onMobileNavigate",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 152
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "logout",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 158
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "canShowItem",
+    "entrada": "item: MenuItem",
+    "retorno": "boolean",
+    "linea": 169
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "getVisibleChildren",
+    "entrada": "item: MenuItem",
+    "retorno": "MenuItem[]",
+    "linea": 173
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "hasVisibleChildren",
+    "entrada": "item: MenuItem",
+    "retorno": "boolean",
+    "linea": 177
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "onDocumentClick",
+    "entrada": "event: MouseEvent",
+    "retorno": "void",
+    "linea": 185
+  },
+  {
+    "archivo": "src/app/pages/sidebar/sidebar.ts",
+    "nombre": "onEscape",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 192
+  },
+  {
+    "archivo": "src/app/layout/app-shell.ts",
+    "nombre": "clearPrivateState",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 30
+  },
+  {
+    "archivo": "src/app/layout/app-shell.ts",
+    "nombre": "ngOnDestroy",
+    "entrada": "",
+    "retorno": "void",
+    "linea": 39
+  }
+]

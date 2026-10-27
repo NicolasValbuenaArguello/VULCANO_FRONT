@@ -99,6 +99,14 @@ private hojaCompleta!: ElementRef<HTMLElement>;
   @Output() coordenadaRegistrada = new EventEmitter<RegistroCoordenada>();
   @Output() abrirCatalogoIconos = new EventEmitter<void>();
   @Output() abrirGraficar = new EventEmitter<void>();
+  /** Solicita la unica ventana compartida sin modificar la pieza ni sus coordenadas. */
+  @Output() abrirLimitesSeguridad = new EventEmitter<void>();
+
+  /** Cierra el menu de pieza y delega exclusivamente la apertura al contenedor Vulcano. */
+  solicitarLimitesSeguridad(): void {
+    this.contextId.set(null);
+    this.abrirLimitesSeguridad.emit();
+  }
   /** Solicita al padre el informe existente sin duplicar su logica de generacion. */
   @Output() informeSolicitado = new EventEmitter<void>();
   /** Refleja la operacion del padre para bloquear clics mientras se genera el PDF. */
@@ -251,7 +259,7 @@ readonly center = signal<LocalPoint>({
     const point = element ? this.toScreen(element) : { x: 0, y: 0 };
     return {
       x: this.clamp(point.x + 12, 6, this.viewport().width - 186),
-      y: this.clamp(point.y + 12, 6, this.viewport().height - 102),
+      y: this.clamp(point.y + 12, 6, this.viewport().height - 210),
     };
   });
 

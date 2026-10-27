@@ -9,7 +9,7 @@ import { MapaTresD } from '../../../pages/vulcano/mapa-tres-d/mapa-tres-d';
 describe('Map layers controls', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] }));
 
-  it('keeps all five native Leaflet selections, toggles and isolates map gestures', () => {
+  it('shows five Leaflet options but initializes and permits only satellite', () => {
     const component = TestBed.runInInjectionContext(() => new MapaComponent()) as any;
     const viewport = document.createElement('div');
     document.body.append(viewport);
@@ -29,13 +29,16 @@ describe('Map layers controls', () => {
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
       toggle.click();
       expect(toggle.getAttribute('aria-expanded')).toBe('false');
-      for (const [index, key] of ['streets', 'satellite', 'topographic', 'light', 'dark'].entries()) {
-        control.expand();
+      expect(radios.map(input => input.disabled)).toEqual([true, false, true, true, true]);
+      expect(radios[1].checked).toBe(true);
+      expect(Object.keys(component.baseLayers)).toEqual(['satellite']);
+      for (const index of [0, 2, 3, 4]) {
         radios[index].click();
-        expect(component.activeBaseMapKey).toBe(key);
-        expect(map.hasLayer(component.baseLayers[key])).toBe(true);
-        expect(Object.values(component.baseLayers).filter(layer => map.hasLayer(layer as L.Layer))).toHaveLength(1);
+        expect(component.activeBaseMapKey).toBe('satellite');
       }
+      map.fire('zoomend');
+      expect(radios.map(input => input.disabled)).toEqual([true, false, true, true, true]);
+      expect(map.hasLayer(component.baseLayers.satellite)).toBe(true);
       const gesture = vi.fn();
       viewport.addEventListener('mousedown', gesture);
       root.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -51,7 +54,7 @@ describe('Map layers controls', () => {
     }
   });
 
-  it('keeps all five MapLibre callbacks, selected state and closes without map gestures', () => {
+  it('disables four MapLibre options and preserves satellite selection and gestures', () => {
     const component = TestBed.runInInjectionContext(() => new MapaTresD()) as any;
     const viewport = document.createElement('div');
     document.body.append(viewport);
@@ -69,18 +72,14 @@ describe('Map layers controls', () => {
     try {
       expect(root.textContent).toContain('MAPAS Y CAPAS');
       expect(radios).toHaveLength(5);
-      for (const [index, key] of ['streets', 'satellite', 'topographic', 'light', 'dark'].entries()) {
-        toggle.click();
-        expect(toggle.getAttribute('aria-expanded')).toBe('true');
-        expect(panel.inert).toBe(false);
-        radios[index].click();
-        expect(change).toHaveBeenLastCalledWith(key);
-        control.setActiveBaseMap(key);
-        expect(radios[index].checked).toBe(true);
-        expect(toggle.getAttribute('aria-expanded')).toBe('false');
-        expect(panel.inert).toBe(true);
-      }
-      expect(change).toHaveBeenCalledTimes(5);
+      expect(radios.map(input => input.disabled)).toEqual([true, false, true, true, true]);
+      expect(radios[1].checked).toBe(true);
+      for (const index of [0, 2, 3, 4]) radios[index].click();
+      expect(change).not.toHaveBeenCalled();
+      toggle.click();
+      radios[1].dispatchEvent(new Event('change'));
+      expect(change).toHaveBeenCalledExactlyOnceWith('satellite');
+      expect(panel.inert).toBe(true);
       toggle.click();
       root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       expect(toggle.getAttribute('aria-expanded')).toBe('false');

@@ -1,3 +1,4 @@
+import { CartographyConfigService } from '../../services/cartography-config.service';
 import { MeasurementService } from '../geographic-measurement/measurement.service';
 import { LeafletMeasurementAdapter } from '../geographic-measurement/measurement-adapters';
 import { ApplicationRef, EnvironmentInjector } from '@angular/core';
@@ -36,11 +37,16 @@ type LeafletMapConfig = {
 };
 
 interface BaseMapConfig {
+  enabled: boolean;
   key: 'streets' | 'satellite' | 'topographic' | 'light' | 'dark';
   name: string;
   url: string;
   attribution: string;
   maxZoom: number;
+  minZoom?: number;
+  tileSize?: number;
+  subdomains?: string[];
+  bounds?: [number, number, number, number];
 }
 
 export function camposCoordenadasInvalidos(elemento: ElementoMapa): string[] {
@@ -65,6 +71,7 @@ export function camposCoordenadasInvalidos(elemento: ElementoMapa): string[] {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
+  private readonly cartography = inject(CartographyConfigService);
   // ======================================================
   // INPUTS
   // ======================================================
@@ -146,7 +153,7 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
   private readonly overlayLayers: Record<string, L.Layer> = {};
   private baseLayerControl: L.Control.Layers | null = null;
   private disposeLayerControlPresentation?: () => void;
-  private activeBaseMapKey: BaseMapConfig['key'] = 'streets';
+  private activeBaseMapKey: BaseMapConfig['key'] = this.cartography.resolveSelection();
   private readonly elementoMarkers = new Map<string, L.Marker>();
   private relacionLayer: L.Polyline | null = null;
   private readonly diagnosticosElementosInvalidos = new Set<string>();
@@ -289,13 +296,27 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.clearBaseLayers();
 
     const configs = this.buildBaseMapConfigs();
-    const baseMaps: Record<string, L.TileLayer> = {};
+    const baseMaps: Record<string, L.Layer> = {};
+    this.activeBaseMapKey = this.cartography.resolveSelection(this.activeBaseMapKey);
     let initialLayer: L.TileLayer | null = null;
 
     for (const config of configs) {
+      if (!config.enabled) {
+        // Solo una entrada vacia para el selector: no construye TileLayer ni solicita teselas.
+        baseMaps[config.name] = L.layerGroup();
+        continue;
+      }
       const layer = L.tileLayer(config.url, {
         maxZoom: config.maxZoom,
         attribution: config.attribution,
+        minZoom: config.minZoom,
+        tileSize: config.tileSize,
+        subdomains: config.subdomains ?? ['a', 'b', 'c'],
+        bounds: config.bounds ? [[config.bounds[1], config.bounds[0]], [config.bounds[3], config.bounds[2]]] : undefined,
+        // Solicita teselas al terminar el movimiento, sin precargar una zona amplia.
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 1,
       });
 
       this.baseLayers[config.key] = layer;
@@ -306,7 +327,7 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
       }
     }
 
-    const defaultLayer = initialLayer ?? this.baseLayers.streets ?? Object.values(this.baseLayers)[0] ?? null;
+    const defaultLayer = initialLayer ?? this.baseLayers.satellite ?? Object.values(this.baseLayers)[0] ?? null;
 
     defaultLayer?.addTo(this.map);
     this.baseLayerControl = L.control.layers(baseMaps, this.overlayLayers, this.layerControlOptions).addTo(this.map);
@@ -332,6 +353,7 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
     L.DomEvent.disableScrollPropagation(container);
     L.DomEvent.off(toggle);
     const sync = () => {
+      syncDisabled();
       const open = container.classList.contains('leaflet-control-layers-expanded');
       toggle.setAttribute('aria-expanded', String(open));
       panel.inert = !open;
@@ -352,10 +374,22 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
       overlays.setAttribute('aria-label', 'CAPAS DISPONIBLES');
       overlays.dataset['heading'] = 'CAPAS DISPONIBLES';
     }
+    /** Leaflet recalcula disabled al cambiar zoom; reaplica la politica despues. */
+    const syncDisabled = () => {
+      const configs = this.buildBaseMapConfigs();
+      container.querySelectorAll<HTMLInputElement>('.leaflet-control-layers-base input').forEach((input, index) => {
+        const disabled = !configs[index]?.enabled;
+        if (disabled) input.disabled = true;
+        input.closest('label')?.classList.toggle('map-base-disabled', disabled);
+        input.closest('label')?.setAttribute('aria-disabled', String(disabled));
+      });
+    };
+    syncDisabled();
+    this.map!.on('zoomend', syncDisabled);
     const observer = new MutationObserver(sync);
     observer.observe(container, { attributes: true, attributeFilter: ['class'] });
     const stopViewportObservation = observeMapLayersViewport(container, this.map!.getContainer());
-    this.disposeLayerControlPresentation = () => { observer.disconnect(); stopViewportObservation(); };
+    this.disposeLayerControlPresentation = () => { observer.disconnect(); stopViewportObservation(); this.map?.off('zoomend', syncDisabled); };
     sync();
   }
 
@@ -379,46 +413,14 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
     };
   }
 
+  /** Adapta el catalogo compartido conservando los inputs publicos de Calles. */
   private buildBaseMapConfigs(): BaseMapConfig[] {
-    const streetsConfig = this.resolveMapConfig();
-
-    return [
-      {
-        key: 'streets',
-        name: 'Calles',
-        url: streetsConfig.tileUrl,
-        attribution: streetsConfig.attribution,
-        maxZoom: streetsConfig.maxZoom,
-      },
-      {
-        key: 'satellite',
-        name: 'Satelital',
-        url: environment.map.satellite,
-        attribution: 'Tiles © Esri',
-        maxZoom: 19,
-      },
-      {
-        key: 'topographic',
-        name: 'Topográfico',
-        url: environment.map.topographic,
-        attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
-        maxZoom: 17,
-      },
-      {
-        key: 'light',
-        name: 'Claro',
-        url: environment.map.light,
-        attribution: '© OpenStreetMap contributors © CARTO',
-        maxZoom: 20,
-      },
-      {
-        key: 'dark',
-        name: 'Oscuro',
-        url: environment.map.dark,
-        attribution: '© OpenStreetMap contributors © CARTO',
-        maxZoom: 20,
-      },
-    ];
+    return this.cartography.layers().map(layer => ({
+      ...layer, key: layer.id,
+      url: layer.id === 'streets' ? this.tileUrl?.trim() || layer.tileUrl : layer.tileUrl,
+      attribution: layer.id === 'streets' ? this.attribution?.trim() || layer.attribution : layer.attribution,
+      maxZoom: layer.id === 'streets' ? Math.min(this.maxZoom, layer.maxZoom) : layer.maxZoom,
+    }));
   }
 
   private configureDefaultIcons(): void {
@@ -476,7 +478,7 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private readonly handleBaseLayerChange = (event: L.LayersControlEvent): void => {
     const selectedKey = this.findBaseMapKeyByName(event.name);
-    if (selectedKey) {
+    if (selectedKey && this.cartography.isEnabled(selectedKey)) {
       this.activeBaseMapKey = selectedKey;
     }
   };

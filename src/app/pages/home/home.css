@@ -114,3 +114,36 @@ button { font: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .tactical-panel, .forum-item, .chat-message { transition: none; }
 }
+/* El fondo se fija al scrollport de app-main, sin cubrir el sidebar ni duplicarse. */
+:host { --vulcano-bg: #050805; --vulcano-text: #f0f0e8; --vulcano-muted: #a6ab9c; --vulcano-gold: #b2a45c; --vulcano-green: #858521; }
+.home-page { isolation: isolate; overflow: clip; padding: 0; background: #050805; }
+.home-background { position: sticky; top: 0; height: 100dvh; margin-bottom: -100dvh; z-index: 0; pointer-events: none; }
+.home-page__radar { display: none; }
+.home-command { width: min(100%, 100rem); padding: clamp(1.2rem, 3vw, 3rem); box-sizing: border-box; }
+.home-hero { padding-block: clamp(1rem, 2.5vh, 2rem); }
+.home-hero__eyebrow, .home-hero__badge { font-size: .75rem; line-height: 1.5; }
+.home-hero__description { font-size: 1rem; line-height: 1.6; max-width: 65ch; }
+.home-hero__reference { font-size: .65rem; }
+.home-grid { gap: clamp(1rem, 2vw, 2rem); }
+.tactical-panel { min-width: 0; background: rgba(8,15,8,.8); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); }
+.panel-header { padding: 1rem; flex-wrap: wrap; }
+.panel-header h2 { font-size: clamp(.9rem, 1vw, 1.1rem); line-height: 1.5; }
+.panel-meta { font-size: .65rem; }
+.filter-button, .new-topic, .channel-button, .chat-compose button, .forum-pagination button { font-size: .7rem; min-height: 34px; }
+.forum-tools { flex-wrap: wrap; }
+.forum-search input, .chat-compose input { font-size: .8rem; }
+.forum-search kbd { font-size: .6rem; }
+.forum-item, .chat-message { padding: 1.1rem; }
+.forum-item h3 { font-size: 1rem; line-height: 1.5; }
+.forum-item__top, .forum-item__bottom, .chat-message header { font-size: .7rem; flex-wrap: wrap; }
+.forum-item__top b, .forum-item__top small, .chat-message header em { font-size: .6rem; }
+.chat-message p { font-size: .95rem; line-height: 1.7; }
+.forum-pagination, .home-footer { font-size: .65rem; flex-wrap: wrap; }
+.home-footer { background: rgba(8,15,8,.8); }
+@media (max-width: 1000px) { .home-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  .home-hero h1 { font-size: 1.6rem; overflow-wrap: anywhere; }
+  .panel-meta { align-items: flex-start; text-align: left; }
+  .home-hero__eyebrow { flex-wrap: wrap; }
+  .forum-item__bottom { gap: .5rem; }
+}

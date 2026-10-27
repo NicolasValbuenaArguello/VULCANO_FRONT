@@ -23,6 +23,39 @@ describe('Menu', () => {
     await fixture.whenStable();
   });
 
+  it('opens one Systems instance, restores it from the menu and destroys it on close', async () => {
+    const option = component.menuItems.find(item => item.action === 'abrir-ventana-sistemas-artilleria')!;
+    component.onMenuClick(option);
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const host = fixture.nativeElement.querySelector('app-ventana-sistemas-artilleria');
+    host.querySelector('[title="Minimizar"]').click();
+    component.onMenuClick(option);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-ventana-sistemas-artilleria')).toHaveLength(1);
+    expect(host.querySelector('.floating-window__content').hidden).toBe(false);
+    host.querySelector('[title="Cerrar"]').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-ventana-sistemas-artilleria')).toBeNull();
+  });
+
+  it('shares foreground ordering when opening, selecting and reopening windows', () => {
+    component.openSistemasWindow();
+    component.openGraficarWindow();
+    expect(component.graficarWindowZIndex).toBeGreaterThan(component.sistemasWindowZIndex);
+    component.openIconosWindow();
+    expect(component.iconosWindowZIndex).toBeGreaterThan(component.graficarWindowZIndex);
+    component.activateSistemasWindow();
+    expect(component.sistemasWindowZIndex).toBeGreaterThan(component.iconosWindowZIndex);
+    component.activateExistingWindow('graficar');
+    expect(component.graficarWindowZIndex).toBeGreaterThan(component.sistemasWindowZIndex);
+    component.openIconosWindow();
+    expect(component.iconosWindowZIndex).toBeGreaterThan(component.graficarWindowZIndex);
+    component.openGraficarWindow();
+    expect(component.graficarWindowZIndex).toBeGreaterThan(component.iconosWindowZIndex);
+  });
+
   it('reuses the open form and reopens it after closing', async () => {
     component.onMenuClick(component.menuItems[0]);
     fixture.changeDetectorRef.markForCheck();

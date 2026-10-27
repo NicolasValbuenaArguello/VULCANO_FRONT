@@ -12,9 +12,21 @@
 </nav>
 
 <div #floatingWindowsHost style="display: contents">
+@if (limitesWindowOpen) {
+  <app-ventana-limites-seguridad [zIndex]="limitesWindowZIndex"
+    (activated)="activateLimitesWindow()" (closed)="limitesWindowOpen = false"></app-ventana-limites-seguridad>
+}
+@if (sistemasWindowOpen) {
+  <app-ventana-sistemas-artilleria
+    [zIndex]="sistemasWindowZIndex"
+    (activated)="activateSistemasWindow()"
+    (closed)="sistemasWindowOpen = false"
+  ></app-ventana-sistemas-artilleria>
+}
 @if (graficarWindowOpen) {
   <section
     #floatingWindow
+    (pointerdown)="activateExistingWindow('graficar')"
     class="floating-window floating-window--graficar"
     role="dialog"
     aria-label="Ventana de Graficar"
@@ -60,6 +72,7 @@
 @if (iconosWindowOpen) {
   <section
     #iconosWindow
+    (pointerdown)="activateExistingWindow('iconos')"
     class="floating-window floating-window--iconos"
     role="dialog"
     aria-label="Ventana de Iconos"

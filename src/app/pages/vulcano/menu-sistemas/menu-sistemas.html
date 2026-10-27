@@ -1,0 +1,11 @@
+﻿<nav class="systems-menu" role="tablist" aria-label="Secciones de Sistemas de Artillería">
+  @for (opcion of menu; track opcion.id; let indice = $index) {
+    <button type="button" role="tab" class="systems-option" [class.is-active]="opcion.activo"
+      [id]="'sistemas-tab-' + opcion.id" [attr.aria-selected]="opcion.activo"
+      aria-controls="sistemas-contenido" [attr.tabindex]="opcion.activo ? 0 : -1"
+      (click)="seleccionarMenu(opcion.id)" (keydown)="navegarTeclado($event, indice)">
+      <span class="option-title">{{ opcion.titulo }}</span>
+      <span class="option-description">{{ opcion.descripcion }}</span><span class="active-light" aria-hidden="true"></span>
+    </button>
+  }
+</nav>

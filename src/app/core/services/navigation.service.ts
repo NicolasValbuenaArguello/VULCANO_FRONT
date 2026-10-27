@@ -14,6 +14,7 @@ export interface NavigationLog {
 @Injectable({
   providedIn: 'root',
 })
+/** Registra navegaciones y nombre visible en memoria; no constituye auditoria persistente ni autorizacion. */
 export class NavigationService {
   readonly logs = signal<NavigationLog[]>([]);
 
@@ -36,7 +37,7 @@ export class NavigationService {
           from: this.previousUrl,
           to: nextUrl,
           timestamp: new Date(),
-          user: this.authService.getCurrentUser()?.usuario ?? null,
+          user: this.authService.obtenerNombreCompleto() || null,
         };
 
         this.logs.update((current) => [...current, entry]);

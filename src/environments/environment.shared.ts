@@ -112,10 +112,10 @@ export const sharedEnvironment = {
     // ----------------------------------------------------------
 
     osmDiagnostic:
-      'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
 
     osmProbe:
-      'https://a.tile.openstreetmap.org/0/0/0.png',
+      'https://tile.openstreetmap.org/0/0/0.png',
 
     // ----------------------------------------------------------
     // TERRENO

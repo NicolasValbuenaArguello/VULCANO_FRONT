@@ -1,0 +1,406 @@
+{
+  "results": [
+    {
+      "scene": "index",
+      "width": 1920,
+      "height": 1080,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        68,
+        109,
+        513
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1513,
+        858
+      ],
+      "animated": true
+    },
+    {
+      "scene": "index",
+      "width": 1600,
+      "height": 900,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        101,
+        171,
+        502
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1512,
+        859
+      ],
+      "animated": true
+    },
+    {
+      "scene": "index",
+      "width": 1366,
+      "height": 768,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        92,
+        238,
+        516
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1349,
+        768
+      ],
+      "animated": true
+    },
+    {
+      "scene": "index",
+      "width": 1280,
+      "height": 720,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        90,
+        250,
+        528
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1263,
+        720
+      ],
+      "animated": true
+    },
+    {
+      "scene": "index",
+      "width": 768,
+      "height": 1024,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        86,
+        142,
+        406
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        751,
+        1024
+      ],
+      "animated": true
+    },
+    {
+      "scene": "index",
+      "width": 390,
+      "height": 844,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        37,
+        194,
+        428
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        373,
+        844
+      ],
+      "animated": true
+    },
+    {
+      "scene": "login",
+      "width": 1920,
+      "height": 1080,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        88,
+        184,
+        502
+      ],
+      "overflow": false,
+      "card": {
+        "width": 460,
+        "x": 730
+      },
+      "canvas": [
+        1520,
+        855
+      ],
+      "animated": true
+    },
+    {
+      "scene": "login",
+      "width": 1600,
+      "height": 900,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        44,
+        174,
+        457
+      ],
+      "overflow": false,
+      "card": {
+        "width": 460,
+        "x": 561.5
+      },
+      "canvas": [
+        1512,
+        859
+      ],
+      "animated": true
+    },
+    {
+      "scene": "login",
+      "width": 1366,
+      "height": 768,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        46,
+        190,
+        486
+      ],
+      "overflow": false,
+      "card": {
+        "width": 460,
+        "x": 444.5
+      },
+      "canvas": [
+        1349,
+        768
+      ],
+      "animated": true
+    },
+    {
+      "scene": "login",
+      "width": 1280,
+      "height": 720,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        56,
+        199,
+        510
+      ],
+      "overflow": false,
+      "card": {
+        "width": 460,
+        "x": 401.5
+      },
+      "canvas": [
+        1263,
+        720
+      ],
+      "animated": true
+    },
+    {
+      "scene": "login",
+      "width": 768,
+      "height": 1024,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        16,
+        140,
+        412
+      ],
+      "overflow": false,
+      "card": {
+        "width": 460,
+        "x": 154
+      },
+      "canvas": [
+        768,
+        1024
+      ],
+      "animated": true
+    },
+    {
+      "scene": "login",
+      "width": 390,
+      "height": 844,
+      "url": "/login",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        39,
+        60,
+        485
+      ],
+      "overflow": false,
+      "card": {
+        "width": 349,
+        "x": 12
+      },
+      "canvas": [
+        373,
+        844
+      ],
+      "animated": true
+    },
+    {
+      "scene": "home",
+      "width": 1920,
+      "height": 1080,
+      "url": "/home",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        59,
+        198,
+        369
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1513,
+        858
+      ],
+      "animated": true
+    },
+    {
+      "scene": "home",
+      "width": 1600,
+      "height": 900,
+      "url": "/home",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        62,
+        117,
+        379
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1512,
+        859
+      ],
+      "animated": true
+    },
+    {
+      "scene": "home",
+      "width": 1366,
+      "height": 768,
+      "url": "/home",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        66,
+        125,
+        427
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1349,
+        768
+      ],
+      "animated": true
+    },
+    {
+      "scene": "home",
+      "width": 1280,
+      "height": 720,
+      "url": "/home",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        82,
+        129,
+        463
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        1263,
+        720
+      ],
+      "animated": true
+    },
+    {
+      "scene": "home",
+      "width": 768,
+      "height": 1024,
+      "url": "/home",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        51,
+        205,
+        342
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        751,
+        1024
+      ],
+      "animated": true
+    },
+    {
+      "scene": "home",
+      "width": 390,
+      "height": 844,
+      "url": "/home",
+      "backgrounds": 1,
+      "webgl": true,
+      "error": 0,
+      "coverage": [
+        9,
+        209,
+        407
+      ],
+      "overflow": false,
+      "card": null,
+      "canvas": [
+        373,
+        844
+      ],
+      "animated": true
+    }
+  ],
+  "cleanup": {
+    "oldDestroyed": true,
+    "oldFrame": 0,
+    "oldProgram": null,
+    "backgrounds": 1
+  }
+}

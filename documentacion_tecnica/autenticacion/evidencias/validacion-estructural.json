@@ -1,0 +1,30 @@
+{
+  "fecha": "2026-10-27",
+  "ooxml_integro": true,
+  "xml_valido": true,
+  "diagramas_incrustados": 2,
+  "paginas_pdf": 28,
+  "metadatos_personales_retirados": true,
+  "archivos": {
+    "VULCANO_SPRINT_AUTENTICACION_SEGURIDAD.docx": {
+      "bytes": 203139,
+      "sha256": "96cecaa520d6f266c444fef7b2a9d194b9e996421d5ff0049b3233940e6c4821"
+    },
+    "ARQUITECTURA_AUTENTICACION.md": {
+      "bytes": 4277,
+      "sha256": "053aa4a42cea6fa7e0e2d83dec807518a119b1fb7159c2132d7a5e0b0960a709"
+    },
+    "MATRIZ_TRAZABILIDAD_AUTENTICACION.md": {
+      "bytes": 7290,
+      "sha256": "8759ff08eeb1aa36b9adba66f878a4d24c0f39db49370a53aba924fb39f4fe10"
+    },
+    "BITACORA_DESARROLLO_AUTENTICACION.md": {
+      "bytes": 2599,
+      "sha256": "b3a5541df0a6719c75a582db0625b3e1a3976e5064bdd892615de0f777d1b10c"
+    },
+    "INVENTARIO_ARCHIVOS_AUTENTICACION.md": {
+      "bytes": 27059,
+      "sha256": "7b1b59230729dffa8f9b66350f657a80d5f33ad98a6fa8ee64ee7055adb19d93"
+    }
+  }
+}

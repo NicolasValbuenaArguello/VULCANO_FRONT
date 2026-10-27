@@ -7,6 +7,8 @@ import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/auth/auth.service';
 import { APP_PATHS } from '../../core/constants/routes.constants';
+import { TopographyBackground } from '../../shared/components/topography-background/topography-background';
+import { DEFAULT_TOPOGRAPHY_CONFIG } from '../../shared/components/topography-background/topography-shaders';
 
 interface InstitutionalSectionConfig {
   titulo: string;
@@ -26,12 +28,15 @@ interface ObjetivoEstrategico {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TopographyBackground],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Presenta el formulario existente y delega autenticacion a AuthService; controla envios y errores seguros. */
 export class LoginComponent {
+  /** Configuracion visual independiente de la autenticacion y sus credenciales. */
+  protected readonly topographyConfig = DEFAULT_TOPOGRAPHY_CONFIG;
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -110,6 +115,8 @@ export class LoginComponent {
     this.showPassword = !this.showPassword;
   }
 
+  /** Valida controles, bloquea envios duplicados y navega a Home solo tras bootstrap valido.
+   * La suscripcion termina al destruir el componente; finalize libera el estado de envio. */
   protected login(): void {
     if (this.isSubmitting()) {
       return;
@@ -139,11 +146,12 @@ export class LoginComponent {
           void this.router.navigateByUrl(APP_PATHS.HOME);
         },
         error: (error: unknown) => {
-          const message = error instanceof HttpErrorResponse && [400, 401, 422].includes(error.status)
-            ? 'Usuario o contrasena incorrectos.'
-            : error instanceof Error && error.message
-              ? error.message
-              : 'No fue posible iniciar sesion.';
+          // Mensajes controlados: no mostrar detalles internos ni contenido arbitrario del servidor.
+          const message = error instanceof HttpErrorResponse
+            ? error.status === 401 || error.status === 400 ? 'Usuario o contrasena incorrectos.'
+              : error.status === 422 ? 'Revisa los datos de inicio de sesion.'
+              : 'No fue posible conectar con el servicio de autenticacion. Intenta nuevamente.'
+            : 'No fue posible iniciar sesion. La respuesta recibida no es valida o el servicio no esta disponible.';
 
           this.loginError.set(message);
         },

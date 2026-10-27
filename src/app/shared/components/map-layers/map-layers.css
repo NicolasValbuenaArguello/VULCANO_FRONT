@@ -129,3 +129,7 @@
 .vulcano-map-layers label:focus-within { border-color: var(--layers-accent); }
 @media (prefers-reduced-motion: reduce) { .vulcano-map-layers, .vulcano-map-layers * { transition: none !important; } }
 @media (max-height: 480px) { .vulcano-map-layers :is(.leaflet-control-layers-list, .maplibre-basemap-panel) { max-height: min(calc(100dvh - 100px), var(--layers-available-height, 420px)); } }
+
+/* Deshabilitacion temporal sin alterar la geometria del panel. */
+.vulcano-map-layers label.map-base-disabled { opacity: .4; cursor: not-allowed; }
+.vulcano-map-layers label.map-base-disabled input { cursor: not-allowed; }

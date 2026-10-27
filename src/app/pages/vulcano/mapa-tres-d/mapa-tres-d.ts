@@ -1,3 +1,4 @@
+import { CartographyConfigService } from '../../../shared/services/cartography-config.service';
 import { MeasurementService } from '../../../shared/components/geographic-measurement/measurement.service';
 import { MapLibreMeasurementAdapter } from '../../../shared/components/geographic-measurement/measurement-adapters';
 import { ApplicationRef, EnvironmentInjector } from '@angular/core';
@@ -40,6 +41,7 @@ type BaseMapId = 'streets' | 'satellite' | 'topographic' | 'light' | 'dark';
 type BaseMapType = 'raster' | 'style';
 
 interface BaseMapConfig {
+  enabled: boolean;
   id: BaseMapId;
   name: string;
   provider: string;
@@ -51,6 +53,7 @@ interface BaseMapConfig {
   requiresApiKey?: boolean;
   minZoom?: number;
   maxZoom?: number;
+  bounds?: [number, number, number, number];
 }
 
 interface PendingBaseMapChange {
@@ -209,7 +212,7 @@ class BaseMapControl implements IControl {
   }
 
   setActiveBaseMap(baseMapId: BaseMapId): void {
-    this.activeBaseMapId = baseMapId;
+    this.activeBaseMapId = this.configs[baseMapId].enabled ? baseMapId : Object.values(this.configs).find(config => config.enabled)!.id;
     this.requestedBaseMapId = null;
     this.syncSelection();
   }
@@ -229,11 +232,14 @@ class BaseMapControl implements IControl {
 
       const input = document.createElement('input');
       input.type = 'radio';
+      input.disabled = !config.enabled;
+      label.classList.toggle('map-base-disabled', !config.enabled);
+      label.setAttribute('aria-disabled', String(!config.enabled));
       input.name = 'maplibre-basemap';
       input.dataset['baseMapId'] = config.id;
       input.checked = config.id === (this.requestedBaseMapId ?? this.activeBaseMapId);
       input.addEventListener('change', () => {
-        if (!input.checked) {
+        if (!config.enabled || !input.checked) {
           return;
         }
 
@@ -334,7 +340,8 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
   private readonly DEFAULT_MAX_PITCH = 85;
   private readonly DEFAULT_BEARING = 0;
   private readonly DEFAULT_PITCH = 0;
-  private readonly DEFAULT_BASE_MAP_ID: BaseMapId = 'streets';
+  private readonly cartography = inject(CartographyConfigService);
+  private readonly DEFAULT_BASE_MAP_ID: BaseMapId = this.cartography.resolveSelection();
   private readonly BASE_SOURCE_ID = 'base-map-source';
   private readonly BASE_LAYER_ID = 'base-map-layer';
   private readonly BASE_SOURCE_ID_NEXT = 'base-map-source-next';
@@ -646,77 +653,13 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
   // ======================================================
 
   /**
-   * MODIFICAR AQUÍ LOS MAPAS BASE.
+   * Catalogo compartido definido por CARTOGRAPHY_CONFIG / CartographyConfigService.
    *
    * Esta estructura está preparada para crecer con cartografía propia,
    * satélite, topografía o estilos institucionales sin cambiar la lógica
    * principal del mapa.
    */
-  private readonly baseMaps: Record<BaseMapId, BaseMapConfig> = {
-    streets: {
-      id: 'streets',
-      provider: 'OpenStreetMap',
-      name: 'Calles',
-      type: 'raster',
-      tiles: [environment.map.tileUrl],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    },
-    satellite: {
-      id: 'satellite',
-      provider: 'Esri World Imagery',
-      name: 'Satelital',
-      type: 'raster',
-      tiles: [environment.map.satellite],
-      tileSize: 256,
-      attribution: 'Tiles © Esri, © OpenStreetMap contributors, and contributors named by Esri',
-      maxZoom: 19,
-    },
-    topographic: {
-      id: 'topographic',
-      provider: 'OpenTopoMap',
-      name: 'Topográfico',
-      type: 'raster',
-      tiles: [
-        environment.map.topographic.replace('{s}', 'a'),
-        environment.map.topographic.replace('{s}', 'b'),
-        environment.map.topographic.replace('{s}', 'c'),
-      ],
-      tileSize: 256,
-      attribution:
-        'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
-      maxZoom: 17,
-    },
-    light: {
-      id: 'light',
-      provider: 'CARTO Light',
-      name: 'Claro',
-      type: 'raster',
-      tiles: [
-        environment.map.light.replace('{s}', 'a'),
-        environment.map.light.replace('{s}', 'b'),
-        environment.map.light.replace('{s}', 'c'),
-      ],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors © CARTO',
-      maxZoom: 20,
-    },
-    dark: {
-      id: 'dark',
-      provider: 'CARTO Dark',
-      name: 'Oscuro',
-      type: 'raster',
-      tiles: [
-        environment.map.dark.replace('{s}', 'a'),
-        environment.map.dark.replace('{s}', 'b'),
-        environment.map.dark.replace('{s}', 'c'),
-      ],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors © CARTO',
-      maxZoom: 20,
-    },
-  };
+  private readonly baseMaps: Record<BaseMapId, BaseMapConfig> = inject(CartographyConfigService).mapLibreLayers();
 
   // ======================================================
   // INICIALIZACIÓN
@@ -854,6 +797,7 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
   }
 
   private createStyle(): StyleSpecification {
+    this.activeBaseMapId = this.cartography.resolveSelection(this.activeBaseMapId);
     return {
       version: 8,
       name: 'MapaTresD',
@@ -952,8 +896,9 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     minzoom?: number;
     maxzoom?: number;
     attribution?: string;
+    bounds?: [number, number, number, number];
   } {
-    const config = this.baseMaps[baseMapId];
+    const config = this.baseMaps[this.cartography.resolveSelection(baseMapId)];
     const tiles = config.tiles ?? [];
 
     console.log('[BASE TILE URL]', {
@@ -971,6 +916,7 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
       minzoom: config.minZoom,
       maxzoom: config.maxZoom,
       attribution: config.attribution,
+      bounds: config.bounds,
     };
   }
 
@@ -1483,6 +1429,8 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
    * La lógica principal seguirá viviendo dentro de MapaTresD.
    */
   public changeBaseMap(baseMapId: BaseMapId): void {
+    // Protege tambien llamadas programaticas: una opcion deshabilitada no cambia capas ni camara.
+    if (!this.cartography.isEnabled(baseMapId)) return;
     const config = this.baseMaps[baseMapId];
 
     if (!this.map) {
@@ -3516,8 +3464,9 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
       },
       sources: {
         osm: {
+          ...this.createBaseMapSourceSpecification(this.DEFAULT_BASE_MAP_ID),
           type: 'raster',
-          tiles: [environment.map.tileUrl],
+          attribution: this.baseMaps[this.DEFAULT_BASE_MAP_ID].attribution,
           tileSize: 256,
           maxzoom: 19,
         },
@@ -3889,7 +3838,9 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
       }
     }
 
-    const osmProbe = await this.fetchBinaryHttpProbe(environment.map.osmProbe, 'OSM CONTROL HTTP');
+    const osmProbe = this.cartography.isEnabled('streets')
+      ? await this.fetchBinaryHttpProbe(environment.map.osmProbe, 'OSM CONTROL HTTP')
+      : { ok: false, status: 0, contentType: 'disabled', blobSize: 0 };
     this.setBaselineDiagnosticResult({
       test: 'OSM CONTROL HTTP',
       phase: 'official',
@@ -4285,8 +4236,15 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     contentType: string | null;
     blobSize: number | null;
   }> {
+    if (url === environment.map.osmProbe && !this.cartography.isEnabled('streets')) {
+      return { ok: false, status: 0, contentType: 'disabled', blobSize: null };
+    }
     try {
-      const response = await this.vulcanoApi.getResource(url);
+      // OSM usa la cache HTTP normal del navegador; no pasa por el no-store del diagnostico DEM.
+      // No cambia identidad, cabeceras ni proveedor ante un bloqueo.
+      const response = url === environment.map.osmProbe
+        ? await fetch(url)
+        : await this.vulcanoApi.getResource(url);
       const contentType = response.headers.get('content-type');
       const blob = await response.blob();
       const result = {
@@ -4352,10 +4310,10 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
   }): StyleSpecification {
     const sources: Record<string, unknown> = {
       osm: {
+        ...this.createBaseMapSourceSpecification(this.DEFAULT_BASE_MAP_ID),
         type: 'raster',
-        tiles: [environment.map.osmDiagnostic],
         tileSize: 256,
-        attribution: '&copy; OpenStreetMap Contributors',
+        attribution: this.baseMaps[this.DEFAULT_BASE_MAP_ID].attribution,
         maxzoom: 19,
       },
       terrainSource: options.terrainSource,

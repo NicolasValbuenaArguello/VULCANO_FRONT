@@ -1,3 +1,5 @@
+import { loginFixture } from '../../core/auth/auth-test.fixture';
+import { AuthService } from '../../core/auth/auth.service';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -39,4 +41,35 @@ describe('Login submission', () => {
     localStorage.clear();
     vi.restoreAllMocks();
   });
+  it.each([422, 500, 0, 200])('shows safe errors and keeps the form usable for status %s', status => {
+    TestBed.configureTestingModule({ imports: [LoginComponent], providers: [
+      provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
+    ] });
+    const fixture = TestBed.createComponent(LoginComponent), c = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    c['form'].patchValue({ usuario: 'tester', password: 'password' }); c['login']();
+    const req = http.expectOne('/api/auth/token');
+    if (status === 0) req.error(new ProgressEvent('error'));
+    else req.flush({ detail: 'sensitive-server-detail' }, { status, statusText: 'Error' });
+    expect(c['loginError']()).toBeTruthy();
+    expect(c['loginError']()).not.toContain('sensitive-server-detail');
+    expect(c['isSubmitting']()).toBe(false); expect(navigate).not.toHaveBeenCalled();
+    expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
+    http.verify(); fixture.destroy(); vi.restoreAllMocks();
+  });
+  it('navigates normally after the new response is validated', () => {
+    TestBed.configureTestingModule({ imports: [LoginComponent], providers: [
+      provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
+    ] });
+    const fixture = TestBed.createComponent(LoginComponent), c = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    c['form'].patchValue({ usuario: 'tester', password: 'password' }); c['login']();
+    http.expectOne('/api/auth/token').flush(loginFixture());
+    expect(navigate).toHaveBeenCalledWith('/home');
+    expect(c['loginError']()).toBeNull();
+    http.verify(); fixture.destroy(); vi.restoreAllMocks();
+  });
+
 });

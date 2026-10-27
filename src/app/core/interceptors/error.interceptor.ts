@@ -9,6 +9,10 @@ import { SKIP_ERROR_INTERCEPTOR } from '../auth/auth-http-context';
 // ERROR INTERCEPTOR
 // Centraliza manejo de errores HTTP del backend.
 // ======================================================
+/** Un 401 protegido de la sesion actual solicita logout local; 403 conserva la sesion.
+ * @param req Solicitud de origen; respeta SKIP_ERROR_INTERCEPTOR y limites del backend.
+ * @param next Siguiente manejador HTTP.
+ * @returns Flujo que propaga los errores; no intenta refresh. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   if (req.context.get(SKIP_ERROR_INTERCEPTOR)) {
     return next(req);
@@ -16,6 +20,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   const apiConfig = inject(ApiConfigService);
   const authService = inject(AuthService);
+  const generation = authService.sessionGeneration;
 
   return next(req).pipe(
     catchError((error: unknown) => {
@@ -27,8 +32,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      if (error.status === 401 && !apiConfig.isLoginEndpoint(req.url)) {
-        authService.logout();
+      if (error.status === 401 && !apiConfig.isLoginEndpoint(req.url) && generation === authService.sessionGeneration) {
+        void authService.logout();
         return throwError(() => error);
       }
 

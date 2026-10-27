@@ -1,4 +1,4 @@
-<app-menu
+<app-menu #menu
   [vistaActiva]="vistaActiva"
   (vistaChange)="onVistaChange($event)"
   (coordenadaRegistrada)="onCoordenadaRegistrada($event)">
@@ -27,6 +27,7 @@
   </div>
 
   <div class="vulcano-view vulcano-view--3d" [class.vulcano-view--hidden]="vistaActiva !== '3d'">
+    @defer (when vistaActiva === '3d') {
     <app-mapa-tres-d
       [center]="centroMapa3D"
       [zoom]="zoomMapa3D"
@@ -36,10 +37,11 @@
       [relacionFijada]="relacionFijada"
       [simulacionTrayectoria]="simulacionTrayectoria"
     ></app-mapa-tres-d>
+    }
   </div>
 
   <div class="vulcano-view" [class.vulcano-view--hidden]="vistaActiva !== 'hoja-milimetrada'">
-    <app-hoja-milimetrada [registrosCoordenadas]="registrosCoordenadas" [relacionFijadaEntrada]="relacionFijada" [simulacionTrayectoria]="simulacionTrayectoria" [calculandoTrayectoria]="calculandoTrayectoria" (relacionFijada)="onRelacionFijada($event)" (coordenadaRegistrada)="onCoordenadaRegistrada($event)" (abrirCatalogoIconos)="abrirCatalogoIconos()" (abrirGraficar)="abrirVentanaGraficar()" [generandoInforme]="generandoInforme" (informeSolicitado)="generarInformePdf()">
+    <app-hoja-milimetrada [registrosCoordenadas]="registrosCoordenadas" [relacionFijadaEntrada]="relacionFijada" [simulacionTrayectoria]="simulacionTrayectoria" [calculandoTrayectoria]="calculandoTrayectoria" (relacionFijada)="onRelacionFijada($event)" (coordenadaRegistrada)="onCoordenadaRegistrada($event)" (abrirCatalogoIconos)="abrirCatalogoIconos()" (abrirGraficar)="abrirVentanaGraficar()" (abrirLimitesSeguridad)="menu.openLimitesWindow()" [generandoInforme]="generandoInforme" (informeSolicitado)="generarInformePdf()">
 <ng-container indicadorInforme>
 @if (generandoInforme) {
   <div indicadorInforme class="simulacion-loader-overlay" role="status" aria-live="polite" aria-busy="true"><div class="simulacion-loader-panel"><div class="simulacion-loader-spinner"></div><div class="simulacion-loader-title">GENERANDO INFORME</div><div class="simulacion-loader-message">{{ detalleInforme }}</div><div class="simulacion-loader-wait">ESPERE...</div></div></div>

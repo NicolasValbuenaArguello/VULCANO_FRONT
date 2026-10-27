@@ -1,0 +1,95 @@
+{
+  "criterio": "Igualdad SHA256 del JavaScript transpilado con removeComments=true, ES2022/ESNext",
+  "archivos": [
+    {
+      "archivo": "src/app/core/auth/auth.service.ts",
+      "antes": "842b4082870249c3a1807b21c1b3444b63e496d1ef2757d38e3f13389f0c7100",
+      "despues": "842b4082870249c3a1807b21c1b3444b63e496d1ef2757d38e3f13389f0c7100",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/auth.models.ts",
+      "antes": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "despues": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/auth-response.validator.ts",
+      "antes": "0bd5fa9b1c4d9b94e9c7df750a29d6602f3716c79ebfb3d13f31aa20f457722c",
+      "despues": "0bd5fa9b1c4d9b94e9c7df750a29d6602f3716c79ebfb3d13f31aa20f457722c",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/catalogos.service.ts",
+      "antes": "7bd99071db61e3936889f9c385796971db51c26930d45263ca7bf877689f475f",
+      "despues": "7bd99071db61e3936889f9c385796971db51c26930d45263ca7bf877689f475f",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/authorization-policy.ts",
+      "antes": "cbff500264e94be1cb4678c4ddf3d883d8361c3264e941a042889bc909ef118b",
+      "despues": "cbff500264e94be1cb4678c4ddf3d883d8361c3264e941a042889bc909ef118b",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/auth.guard.ts",
+      "antes": "91175175390b967553198ea5d3d9e71634245ed172c5f9e33f1077916bcf2d8c",
+      "despues": "91175175390b967553198ea5d3d9e71634245ed172c5f9e33f1077916bcf2d8c",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/guest.guard.ts",
+      "antes": "964b279eaeced242afd98b6160468accfd4a8f377b8aea29eb9f1f2681a913e6",
+      "despues": "964b279eaeced242afd98b6160468accfd4a8f377b8aea29eb9f1f2681a913e6",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/auth/auth-http-context.ts",
+      "antes": "a16d22b4755ac95e43f541e5cb6e1b6878b2fbd961657ff323b3a59aa9c512c3",
+      "despues": "a16d22b4755ac95e43f541e5cb6e1b6878b2fbd961657ff323b3a59aa9c512c3",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/interceptors/auth.interceptor.ts",
+      "antes": "47dbcfeecbcd44e471d3dda3a3772045012f222aa28d1287f08f40d428276afb",
+      "despues": "47dbcfeecbcd44e471d3dda3a3772045012f222aa28d1287f08f40d428276afb",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/interceptors/error.interceptor.ts",
+      "antes": "3f97891c672479cab6bcaea986abf9e8bb151d5176ef4bd32eba26b22c000395",
+      "despues": "3f97891c672479cab6bcaea986abf9e8bb151d5176ef4bd32eba26b22c000395",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/services/api-config.service.ts",
+      "antes": "45f6b71da3a0bd0900bd6ba8ed1f40b57bfeedfc90e726763dcb700c3661546b",
+      "despues": "45f6b71da3a0bd0900bd6ba8ed1f40b57bfeedfc90e726763dcb700c3661546b",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/core/services/navigation.service.ts",
+      "antes": "b9af5ec6bb1ac6dc82a408389cd187a38880d90f984d9a57d8048cd615e1d8a4",
+      "despues": "b9af5ec6bb1ac6dc82a408389cd187a38880d90f984d9a57d8048cd615e1d8a4",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/pages/login/login.component.ts",
+      "antes": "d75cda85e5e34527bd689d7826aabcbf3643cc34929e517546e8900d1910dc8e",
+      "despues": "d75cda85e5e34527bd689d7826aabcbf3643cc34929e517546e8900d1910dc8e",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/pages/sidebar/sidebar.ts",
+      "antes": "2791a2f8c8b284e5b25736f41647115810e784c6146868a3c13e3cdf9b6a766d",
+      "despues": "2791a2f8c8b284e5b25736f41647115810e784c6146868a3c13e3cdf9b6a766d",
+      "identico": true
+    },
+    {
+      "archivo": "src/app/layout/app-shell.ts",
+      "antes": "a2170b374fc18fb64d712103857b4c7ec11dd2b51ad7c628923b65cafd2d533c",
+      "despues": "a2170b374fc18fb64d712103857b4c7ec11dd2b51ad7c628923b65cafd2d533c",
+      "identico": true
+    }
+  ]
+}

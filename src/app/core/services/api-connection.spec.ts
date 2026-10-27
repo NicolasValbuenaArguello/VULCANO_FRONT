@@ -1,3 +1,5 @@
+import { loginFixture } from '../auth/auth-test.fixture';
+import { CatalogosService } from '../auth/catalogos.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -17,10 +19,7 @@ describe('Vulcano API connection', () => {
   let auth: AuthService;
   let api: VulcanoApiService;
   let navigate: ReturnType<typeof vi.spyOn>;
-  const loginResponse = {
-    access_token: 'test-jwt', token_type: 'bearer', api_key: 'test-key',
-    usuario: { id: 1, usuario: 'tester', rol: 'ADMIN' },
-  };
+  const loginResponse = loginFixture();
 
   beforeEach(() => {
     localStorage.clear();
@@ -52,7 +51,7 @@ describe('Vulcano API connection', () => {
     expect(TestBed.runInInjectionContext(() => authGuard({} as never, {} as never))).not.toBe(true);
     await login();
     expect(auth.getToken()).toBe('test-jwt');
-    expect(localStorage.getItem(STORAGE_KEYS.accessToken)).toBe('test-jwt');
+    expect(localStorage.getItem(STORAGE_KEYS.accessToken)).toBeNull();
     expect(TestBed.runInInjectionContext(() => authGuard({} as never, {} as never))).toBe(true);
     auth.logout();
     expect(auth.isAuthenticated()).toBe(false);
@@ -70,32 +69,22 @@ describe('Vulcano API connection', () => {
     expect(config.joinUrl('/api/vulcano/', '/dem/health')).toBe('/api/vulcano/dem/health');
   });
 
-  it('accepts the token-only contract, restores it and expires without refresh requests', async () => {
+  it('uses expira_en, keeps tokens in memory and expires without refresh', async () => {
     const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
-    const response = {
-      ok: true, message: 'Sesion iniciada', access_token: 'token-only',
-      token_type: 'bearer', expires_in: 60,
-    };
-    const result = firstValueFrom(auth.login('tester', 'password'));
-    http.expectOne('/api/auth/token').flush(response);
-    expect(await result).toEqual(response);
-    expect(auth.isAuthenticated()).toBe(true);
-    expect(auth.getCurrentUser()).toBeNull();
-    expect(auth.getRole()).toBeNull();
-    expect(TestBed.runInInjectionContext(() => authGuard({} as never, {} as never))).toBe(true);
-    const restored = new AuthService(TestBed.inject(HttpClient), TestBed.inject(ApiConfigService), TestBed.inject(Router));
-    expect(restored.getToken()).toBe('token-only');
-    expect(restored.expiresAt()).toBe(1_060_000);
-    now.mockReturnValue(1_060_000);
+    await login();
+    expect(auth.expiresAt()).toBe(1_060_000);
+    const restored = new AuthService(TestBed.inject(HttpClient), TestBed.inject(ApiConfigService), TestBed.inject(Router), TestBed.inject(CatalogosService));
     expect(restored.getToken()).toBeNull();
-    expect(restored.isAuthenticated()).toBe(false);
-    expect(localStorage.getItem(STORAGE_KEYS.accessToken)).toBeNull();
+    now.mockReturnValue(1_060_000);
+    expect(auth.getToken()).toBeNull();
+    expect(auth.isAuthenticated()).toBe(false);
+    http.expectNone('/api/auth/refresh');
   });
 
-  it('rejects ok:false even with HTTP 200 and clears an earlier session', async () => {
+  it('rejects incomplete JSON even with HTTP 200 and clears an earlier session', async () => {
     await login();
     const result = firstValueFrom(auth.login('tester', 'password'));
-    const rejected = expect(result).rejects.toThrow('Acceso denegado');
+    const rejected = expect(result).rejects.toThrow('incompleta');
     http.expectOne('/api/auth/token').flush({ ok: false, message: 'Acceso denegado' });
     await rejected;
     expect(auth.isAuthenticated()).toBe(false);
@@ -104,7 +93,7 @@ describe('Vulcano API connection', () => {
 
   it('rejects a success response without a token', async () => {
     const result = firstValueFrom(auth.login('tester', 'password'));
-    const rejected = expect(result).rejects.toThrow('falta access_token');
+    const rejected = expect(result).rejects.toThrow('incompleta');
     http.expectOne('/api/auth/token').flush({ ok: true, message: 'Sin token' });
     await rejected;
     expect(auth.isAuthenticated()).toBe(false);
@@ -113,7 +102,7 @@ describe('Vulcano API connection', () => {
   it('does not restore an expired session', () => {
     localStorage.setItem(STORAGE_KEYS.accessToken, 'expired-token');
     localStorage.setItem(STORAGE_KEYS.expiresAt, String(Date.now() - 1000));
-    const restored = new AuthService(TestBed.inject(HttpClient), TestBed.inject(ApiConfigService), TestBed.inject(Router));
+    const restored = new AuthService(TestBed.inject(HttpClient), TestBed.inject(ApiConfigService), TestBed.inject(Router), TestBed.inject(CatalogosService));
     expect(restored.isAuthenticated()).toBe(false);
     expect(localStorage.getItem(STORAGE_KEYS.expiresAt)).toBeNull();
   });
@@ -123,7 +112,7 @@ describe('Vulcano API connection', () => {
     const result = api.getResource(api.elevationUrl(4.65, -74.05));
     const req = http.expectOne('/api/vulcano/dem/elevacion?lat=4.65&lon=-74.05');
     expect(req.request.headers.get('Authorization')).toBe('Bearer test-jwt');
-    expect(req.request.headers.get('X-API-Key')).toBe('test-key');
+    expect(req.request.headers.has('X-API-Key')).toBe(false);
     req.flush(new Uint8Array(Array.from('{"elevacion":2600}', c => c.charCodeAt(0))).buffer);
     expect(await (await result).json()).toEqual({ elevacion: 2600 });
     const external = firstValueFrom(TestBed.inject(HttpClient).get('https://tiles.example/tile'));

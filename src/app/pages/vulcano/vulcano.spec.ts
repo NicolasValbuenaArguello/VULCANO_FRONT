@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import { Vulcano } from './vulcano';
+import { DeferBlockState } from '@angular/core/testing';
 
 describe('Vulcano', () => {
   let component: Vulcano;
@@ -23,5 +24,20 @@ describe('Vulcano', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('defers the hidden 3D map and retains its instance after first use', async () => {
+    expect(fixture.nativeElement.querySelector('app-mapa-tres-d')).toBeNull();
+    const [block] = await fixture.getDeferBlocks();
+    await block.render(DeferBlockState.Complete);
+    const mapHost = fixture.nativeElement.querySelector('app-mapa-tres-d');
+    expect(mapHost).toBeTruthy();
+    component.vistaActiva = '3d';
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    component.vistaActiva = '2d';
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-mapa-tres-d')).toBe(mapHost);
   });
 });

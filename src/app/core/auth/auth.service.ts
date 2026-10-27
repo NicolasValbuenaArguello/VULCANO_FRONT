@@ -1,8 +1,8 @@
 import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, tap, timeout } from 'rxjs/operators';
+import { Observable, Subject, defer, of, throwError } from 'rxjs';
+import { catchError, takeUntil, tap, timeout } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { APP_PATHS } from '../constants/routes.constants';
 import { STORAGE_KEYS } from '../constants/storage-keys.constants';
@@ -12,6 +12,8 @@ import {
   AuthUser,
   LoginResponse,
 } from './auth.models';
+import { CatalogosService } from './catalogos.service';
+import { validarLogin } from './auth-response.validator';
 import { SKIP_AUTH_INTERCEPTOR, SKIP_ERROR_INTERCEPTOR } from './auth-http-context';
 
 // ======================================================
@@ -23,7 +25,29 @@ import { SKIP_AUTH_INTERCEPTOR, SKIP_ERROR_INTERCEPTOR } from './auth-http-conte
 @Injectable({
   providedIn: 'root',
 })
+/** Centraliza la sesion en memoria y el bootstrap. Depende de HttpClient, ApiConfigService, Router y CatalogosService.
+ * No renueva ni revoca tokens remotamente; sus permisos activos siguen siendo codigos de texto. */
 export class AuthService {
+  /** Generacion de sesion para descartar respuestas de usuarios anteriores. */
+  private generation = 0;
+  private readonly sessionEnded = new Subject<void>();
+  private readonly cleanups = new Set<() => void>();
+  readonly loggingOut = signal(false);
+  private logoutTask?: Promise<void>;
+  /** Reservado para renovacion futura: solo memoria y nunca cabeceras HTTP. */
+  private refreshToken: string | null = null;
+
+  /** @returns Version local que permite descartar respuestas de una sesion anterior. */
+  get sessionGeneration(): number { return this.generation; }
+
+  /** Registra limpieza privada sin acoplar AuthService a los servicios operacionales. */
+  /** @param cleanup Limpieza privada sin dependencias circulares.
+   * @returns Funcion para retirar el registro al destruir su consumidor. */
+  registerSessionCleanup(cleanup: () => void): () => void {
+    this.cleanups.add(cleanup);
+    return () => this.cleanups.delete(cleanup);
+  }
+
   readonly currentUser = signal<AuthUser | null>(null);
   readonly accessToken = signal<string | null>(null);
   readonly apiKey = signal<string | null>(null);
@@ -33,23 +57,45 @@ export class AuthService {
     private readonly http: HttpClient,
     private readonly apiConfig: ApiConfigService,
     private readonly router: Router,
+    private readonly catalogos: CatalogosService,
   ) {
-    this.restoreSession();
+    // No se restaura el contrato anterior ni tokens persistidos sin soporte del backend.
+    this.clearSession(false);
   }
 
+  /** Ejecuta solo al suscribirse; cancela el intento anterior y valida el bootstrap completo.
+   * @param usuario Identificador enviado como username; no se persiste.
+   * @param password Credencial enviada en formulario; no se registra ni se conserva en sesion.
+   * @returns Observable de LoginResponse; propaga errores HTTP, timeout o contrato invalido. */
   login(usuario: string, password: string): Observable<LoginResponse> {
-    if (this.canUseMockAuth()) {
-      return this.loginWithMock(usuario, password);
-    }
-
-    return this.loginWithBackend(usuario, password);
+    return defer(() => {
+      if (this.loggingOut()) return throwError(() => new Error('Cierre de sesion en curso.'));
+      // Solo el intento mas reciente puede establecer una sesion.
+      this.sessionEnded.next();
+      const request = this.canUseMockAuth() ? this.loginWithMock(usuario, password) : this.loginWithBackend(usuario, password);
+      // Una respuesta de login tardia no puede recrear credenciales despues de SALIR.
+      return request.pipe(takeUntil(this.sessionEnded));
+    });
   }
 
-  logout(): void {
+  /** Limpieza inmediata e idempotente; /login es la pantalla publica inicial existente. */
+  /** @returns Promesa compartida hasta terminar la redireccion. Solo confirma cierre local, no revocacion remota. */
+  logout(): Promise<void> {
+    if (this.loggingOut()) return this.logoutTask ?? Promise.resolve();
+    this.loggingOut.set(true);
     this.clearSession();
-    void this.router.navigateByUrl(APP_PATHS.LOGIN);
+    this.clearAuthenticationCookies();
+    this.logoutTask = this.router.navigateByUrl(APP_PATHS.LOGIN, { replaceUrl: true })
+      .then(navigated => {
+        if (!navigated) console.warn('La sesion local se cerro, pero la navegacion publica fue cancelada.');
+      })
+      .catch(() => { console.warn('La sesion local se cerro, pero fallo la navegacion publica.'); })
+      .finally(() => { this.loggingOut.set(false); this.logoutTask = undefined; });
+    return this.logoutTask;
   }
 
+  /** Comprueba expira_en convertido a fecha absoluta al autenticar.
+   * @returns Si existe access token no vencido; no verifica firma JWT ni consulta al servidor. */
   isAuthenticated(): boolean {
     const expiry = this.expiresAt();
     if (expiry !== null && Date.now() >= expiry) {
@@ -58,20 +104,54 @@ export class AuthService {
     return !!this.accessToken();
   }
 
+  /** @returns Access token vigente o null tras limpiar una sesion vencida. Nunca retorna el refresh token. */
   getToken(): string | null {
     return this.isAuthenticated() ? this.accessToken() : null;
   }
 
+  /** @returns Clave de compatibilidad; el contrato bootstrap actual no la entrega y permanece nula. */
   getApiKey(): string | null {
     return this.apiKey();
   }
 
+  /** @returns Usuario en memoria; consultar autenticacion para evaluar tambien la expiracion. */
   getCurrentUser(): AuthUser | null {
     return this.currentUser();
   }
 
+  /** @returns Rol informado por el bootstrap, sin inferir asignaciones del catalogo. */
   getRole(): string | null {
     return this.currentUser()?.rol ?? null;
+  }
+
+  /** @returns El mismo usuario centralizado, sin mantener una copia de estado adicional. */
+  obtenerUsuario(): AuthUser | null { return this.getCurrentUser(); }
+  /** @returns Nombres y apellidos para los consumidores visuales; cadena vacia sin usuario. */
+  obtenerNombreCompleto(): string {
+    const u = this.currentUser();
+    return u ? `${u.nombres} ${u.apellidos}`.trim() : '';
+  }
+  /** @returns Alias de getRole para consumidores en espanol. */
+  obtenerRol(): string | null { return this.getRole(); }
+  /** @returns Copia de los codigos asignados al usuario; no incluye el catalogo general. */
+  obtenerPermisos(): string[] { return [...(this.currentUser()?.permisos ?? [])]; }
+  /** Regla operativa actual por codigo; no incorpora la politica numerica preparada.
+   * @param codigo Codigo textual asignado.
+   * @returns Si la sesion es valida y la lista contiene el codigo, incluso para administradores. */
+  tienePermiso(codigo: string): boolean { return this.isAuthenticated() && this.obtenerPermisos().includes(codigo); }
+  /** @param rol Nombre exacto esperado.
+   * @returns Si el rol coincide en una sesion vigente; no concede permisos adicionales. */
+  tieneRol(rol: string): boolean { return this.isAuthenticated() && this.getRole() === rol; }
+  /** Resuelve media relativa contra el origen configurado, sin duplicar /api/auth. */
+  /** @returns URL HTTP(S) de fotografia o null; sin fotografia se conserva la representacion predeterminada. */
+  obtenerFotoUsuario(): string | null {
+    const foto = this.currentUser()?.foto_url;
+    if (!foto) return null;
+    try {
+      const base = new URL(this.apiConfig.authBaseUrl, location.origin);
+      const url = new URL(foto, base.origin + '/');
+      return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch { return null; }
   }
 
   private loginWithMock(usuario: string, password: string): Observable<LoginResponse> {
@@ -81,11 +161,12 @@ export class AuthService {
 
     const response: LoginResponse = {
       access_token: 'TEMP_TOKEN',
-      token_type: 'bearer',
-      api_key: 'TEMP_API_KEY',
+      tipo_token: 'bearer', refresh_token: 'TEMP_REFRESH_TOKEN', expira_en: 1500,
+      catalogos: { tipos_unidad: [], unidades: [], estados_operacionales: [], estados_logisticos: [], permisos: [] },
       usuario: {
         id: 1,
-        usuario: 'admin',
+        nombres: 'admin', apellidos: '', grado: '', email_institucional: '',
+        permisos: [], documentos_aprobados: false, foto_url: null,
         rol: 'ADMIN',
       },
     };
@@ -115,57 +196,30 @@ export class AuthService {
         timeout(environment.timeout),
         tap((loginResponse) => this.applySession(this.mapLoginResponse(loginResponse))),
         catchError((error) => {
-          this.clearSession();
+          // Conserva el error de este login; no cancela su propia notificacion.
+          this.clearSession(false, false);
           return throwError(() => error);
         }),
       );
   }
 
+  /** Publica el access token despues de copiar los catalogos; no escribe credenciales en almacenamiento web. */
   private applySession(session: AuthSession): void {
+    // Cargar primero los catalogos evita una sesion parcial si su lectura falla.
+    this.catalogos.cargar(session.catalogos);
+    ++this.generation;
     this.currentUser.set(session.user);
+    this.refreshToken = session.refreshToken;
+    this.expiresAt.set(session.expiresAt);
     this.accessToken.set(session.accessToken);
-    this.apiKey.set(session.apiKey ?? null);
-    this.expiresAt.set(session.expiresAt ?? null);
-
-    if (session.user) {
-      this.persistValue(STORAGE_KEYS.user, session.user);
-    } else {
-      this.removeValue(STORAGE_KEYS.user);
-    }
-    this.persistText(STORAGE_KEYS.accessToken, session.accessToken);
-    if (session.expiresAt != null) {
-      this.persistText(STORAGE_KEYS.expiresAt, String(session.expiresAt));
-    } else {
-      this.removeValue(STORAGE_KEYS.expiresAt);
-    }
-
-    if (session.apiKey) {
-      this.persistText(STORAGE_KEYS.apiKey, session.apiKey);
-    } else {
-      this.removeValue(STORAGE_KEYS.apiKey);
-    }
+    this.apiKey.set(null);
   }
 
-  private restoreSession(): void {
-    const user = this.readJson<AuthUser>(STORAGE_KEYS.user);
-    const accessToken = this.readText(STORAGE_KEYS.accessToken);
-    const apiKey = this.readText(STORAGE_KEYS.apiKey);
-    const storedExpiry = this.readText(STORAGE_KEYS.expiresAt);
-    const expiresAt = storedExpiry === null ? null : Number(storedExpiry);
-    const unexpired = expiresAt === null || (Number.isFinite(expiresAt) && expiresAt > Date.now());
-
-    if (accessToken && unexpired && (this.canUseMockAuth() || accessToken !== 'TEMP_TOKEN')) {
-      this.currentUser.set(user);
-      this.accessToken.set(accessToken);
-      this.apiKey.set(apiKey);
-      this.expiresAt.set(expiresAt);
-      return;
-    }
-
-    this.clearSession(false);
-  }
-
-  private clearSession(redirectToLogin = false): void {
+  /** Invalida respuestas pendientes, memoria, claves propias y caches privadas registradas. */
+  private clearSession(redirectToLogin = false, cancelPending = true): void {
+    ++this.generation;
+    this.refreshToken = null;
+    this.catalogos.limpiar();
     this.currentUser.set(null);
     this.accessToken.set(null);
     this.apiKey.set(null);
@@ -175,32 +229,24 @@ export class AuthService {
     this.removeValue(STORAGE_KEYS.accessToken);
     this.removeValue(STORAGE_KEYS.apiKey);
     this.removeValue(STORAGE_KEYS.expiresAt);
+    if (cancelPending) this.sessionEnded.next();
+
+    for (const cleanup of this.cleanups) {
+      try { cleanup(); } catch { console.warn('No se pudo completar una limpieza privada de VULCANO.'); }
+    }
 
     if (redirectToLogin) {
-      void this.router.navigateByUrl(APP_PATHS.LOGIN);
+      void this.router.navigateByUrl(APP_PATHS.LOGIN, { replaceUrl: true });
     }
   }
 
+  /** Valida antes de construir la sesion. La expiracion proviene de expira_en, no de claims JWT decodificados. */
   private mapLoginResponse(response: LoginResponse): AuthSession {
-    if (response?.ok === false) {
-      throw new Error(response.message || 'No fue posible iniciar sesion.');
-    }
-    if (typeof response?.access_token !== 'string' || !response.access_token.trim()) {
-      throw new Error('Respuesta de autenticacion invalida: falta access_token.');
-    }
-    if (response.token_type && response.token_type.toLowerCase() !== 'bearer') {
-      throw new Error('Tipo de token de autenticacion no compatible.');
-    }
-    if (response.expires_in != null &&
-        (!Number.isFinite(response.expires_in) || response.expires_in <= 0)) {
-      throw new Error('Respuesta de autenticacion invalida: expires_in.');
-    }
+    validarLogin(response);
     return {
-      accessToken: response.access_token,
-      user: response.usuario ?? null,
-      apiKey: response.api_key ?? null,
-      tokenType: response.token_type || 'bearer',
-      expiresAt: response.expires_in == null ? null : Date.now() + response.expires_in * 1000,
+      accessToken: response.access_token, refreshToken: response.refresh_token,
+      user: structuredClone(response.usuario), catalogos: response.catalogos,
+      expiresAt: Date.now() + response.expira_en * 1000,
     };
   }
 
@@ -208,49 +254,28 @@ export class AuthService {
     return environment.useMockAuth && !environment.production;
   }
 
-  private persistValue(key: string, value: unknown): void {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // Storage unavailable; session still exists in memory.
-    }
-  }
-
-  private persistText(key: string, value: string): void {
-    try {
-      localStorage.setItem(key, value);
-    } catch {
-      // Storage unavailable; session still exists in memory.
-    }
-  }
-
-  private readText(key: string): string | null {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
-
-  private readJson<T>(key: string): T | null {
-    const raw = this.readText(key);
-
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(raw) as T;
-    } catch {
-      return null;
-    }
-  }
-
+  /** Elimina solo claves de autenticacion VULCANO en ambos almacenamientos. */
   private removeValue(key: string): void {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // Ignore storage errors.
+    for (const type of ['localStorage', 'sessionStorage'] as const) {
+      try { window[type].removeItem(key); }
+      catch { console.warn(`No se pudo eliminar una clave de autenticacion de ${type}.`); }
     }
+  }
+
+  /** Solo cookies visibles con nombres propios conocidos; HttpOnly requiere al servidor. */
+  private clearAuthenticationCookies(): void {
+    const names = new Set<string>(Object.values(STORAGE_KEYS));
+    const paths = new Set(['/', '/api', '/api/auth']);
+    const segments = location.pathname.split('/').filter(Boolean);
+    for (let i = 1; i <= segments.length; i++) paths.add('/' + segments.slice(0, i).join('/'));
+    try {
+      for (const part of document.cookie.split(';')) {
+        const name = part.trim().split('=')[0];
+        if (!names.has(name)) continue;
+        for (const path of paths) {
+          document.cookie = `${name}=; Max-Age=0; Path=${path}; SameSite=Lax`;
+        }
+      }
+    } catch { console.warn('No fue posible limpiar cookies de autenticacion accesibles.'); }
   }
 }

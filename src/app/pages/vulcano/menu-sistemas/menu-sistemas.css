@@ -1,0 +1,13 @@
+﻿:host { display: block; min-width: 0; }
+.systems-menu { display: grid; grid-template-columns: repeat(6, minmax(130px, 1fr)); gap: 8px; padding: 12px; margin: 0; background: #080d08; overflow-x: auto; }
+.systems-option { display: flex; flex-direction: column; gap: 9px; min-width: 0; padding: 14px 12px; border: 1px solid #35402b; border-radius: 5px; background: #10170e; color: #cdd3be; text-align: left; font: inherit; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.option-code { display: flex; align-items: center; justify-content: space-between; font-size: 10px; letter-spacing: .14em; color: #889578; }
+.option-title { font-size: 11px; line-height: 1.45; font-weight: 700; letter-spacing: .06em; }
+.option-description { font-size: 10px; line-height: 1.5; color: #99a48c; }
+.active-light { width: 100%; height: 10px; border-radius: 7px; background: #141811; }
+.systems-option:hover { border-color: #68744a; background: #182011; }
+.systems-option.is-active { background: #1c2314; border-color: #b5a359; box-shadow: inset 0 0 0 1px #b5a35922; }
+.is-active .option-code, .is-active .option-title { color: #d8c77e; }
+.is-active .active-light { background: #55bd4c; box-shadow: 0 0 10px #d6c9899d; }
+.systems-option:focus-visible { outline: 2px solid #d5c46a; outline-offset: -4px; }
+@media (prefers-reduced-motion: reduce) { .systems-option { transition: none; } }

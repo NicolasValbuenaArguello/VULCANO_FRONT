@@ -12,6 +12,7 @@ import { APP_PATHS } from '../../core/constants/routes.constants';
 
 export interface MenuItem {
   name: string;
+  action?: 'logout';
   route?: string;
   permiso?: boolean;
   permisoCodigo?: string;
@@ -40,6 +41,12 @@ export class Sidebar {
   readonly authService = inject(AuthService);
 
   menuItems: MenuItem[] = [
+            {
+      name: 'Salir',
+      action: 'logout',
+      permiso: true,
+      permisoCodigo: 'LOGIN',
+    },
     {
       name: 'Home',
       route: APP_PATHS.HOME,
@@ -84,6 +91,7 @@ export class Sidebar {
         },
       ]
     },
+
   ];
 
   
@@ -146,14 +154,18 @@ export class Sidebar {
     this.openMenu = null;
   }
 
+  /** Cierra menus y solicita el cierre centralizado, tambien desde teclado. */
   logout(): void {
-    this.authService.logout();
+    this.closeMenus();
+    void this.authService.logout();
   }
 
   // ======================================================
   // PERMISOS
   // ======================================================
 
+  /** @param item Configuracion estatica del menu.
+   * @returns Visibilidad por booleano permiso; permisoCodigo aun no se consulta contra AuthService. */
   canShowItem(item: MenuItem): boolean {
     return item.permiso !== false;
   }

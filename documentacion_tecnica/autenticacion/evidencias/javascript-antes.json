@@ -1,0 +1,17 @@
+{
+  "src/app/core/auth/auth.service.ts": "842b4082870249c3a1807b21c1b3444b63e496d1ef2757d38e3f13389f0c7100",
+  "src/app/core/auth/auth.models.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+  "src/app/core/auth/auth-response.validator.ts": "0bd5fa9b1c4d9b94e9c7df750a29d6602f3716c79ebfb3d13f31aa20f457722c",
+  "src/app/core/auth/catalogos.service.ts": "7bd99071db61e3936889f9c385796971db51c26930d45263ca7bf877689f475f",
+  "src/app/core/auth/authorization-policy.ts": "cbff500264e94be1cb4678c4ddf3d883d8361c3264e941a042889bc909ef118b",
+  "src/app/core/auth/auth.guard.ts": "91175175390b967553198ea5d3d9e71634245ed172c5f9e33f1077916bcf2d8c",
+  "src/app/core/auth/guest.guard.ts": "964b279eaeced242afd98b6160468accfd4a8f377b8aea29eb9f1f2681a913e6",
+  "src/app/core/auth/auth-http-context.ts": "a16d22b4755ac95e43f541e5cb6e1b6878b2fbd961657ff323b3a59aa9c512c3",
+  "src/app/core/interceptors/auth.interceptor.ts": "47dbcfeecbcd44e471d3dda3a3772045012f222aa28d1287f08f40d428276afb",
+  "src/app/core/interceptors/error.interceptor.ts": "3f97891c672479cab6bcaea986abf9e8bb151d5176ef4bd32eba26b22c000395",
+  "src/app/core/services/api-config.service.ts": "45f6b71da3a0bd0900bd6ba8ed1f40b57bfeedfc90e726763dcb700c3661546b",
+  "src/app/core/services/navigation.service.ts": "b9af5ec6bb1ac6dc82a408389cd187a38880d90f984d9a57d8048cd615e1d8a4",
+  "src/app/pages/login/login.component.ts": "d75cda85e5e34527bd689d7826aabcbf3643cc34929e517546e8900d1910dc8e",
+  "src/app/pages/sidebar/sidebar.ts": "2791a2f8c8b284e5b25736f41647115810e784c6146868a3c13e3cdf9b6a766d",
+  "src/app/layout/app-shell.ts": "a2170b374fc18fb64d712103857b4c7ec11dd2b51ad7c628923b65cafd2d533c"
+}

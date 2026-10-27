@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { MapaTresD } from './mapa-tres-d';
 import { vi } from 'vitest';
+import { environment } from '../../../../environments/environment';
 
 describe('MapaTresD', () => {
   let component: MapaTresD;
@@ -22,6 +23,34 @@ describe('MapaTresD', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('does not request an OSM probe while its provider is disabled', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Access blocked', {
+      status: 418, headers: { 'content-type': 'text/plain' },
+    }));
+    try {
+      const result = await (component as any).fetchBinaryHttpProbe(environment.map.osmProbe, 'OSM TEST');
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ ok: false, status: 0, contentType: 'disabled' });
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('starts with satellite and ignores programmatic selection of disabled providers', () => {
+    const instance = component as any;
+    expect(instance.activeBaseMapId).toBe('satellite');
+    const style = instance.createStyle();
+    const rasterSources = Object.values(style.sources).filter((source: any) => source.type === 'raster') as any[];
+    expect(rasterSources).toHaveLength(1);
+    expect(rasterSources[0].tiles).toEqual([environment.map.satellite]);
+    const change = vi.spyOn(instance, 'startPendingBaseMapChange');
+    for (const id of ['streets', 'topographic', 'light', 'dark']) instance.changeBaseMap(id);
+    expect(change).not.toHaveBeenCalled();
+    expect(instance.activeBaseMapId).toBe('satellite');
+    const diagnostic = instance.createTerrainControlStyle();
+    expect(diagnostic.sources.osm.tiles).toEqual([environment.map.satellite]);
   });
 
   it('retains pending simulation and restores one layer without repeated camera fits', () => {

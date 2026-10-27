@@ -6,6 +6,7 @@ type BackendMap = Partial<Record<'auth' | 'vulcano' | 'usuarios' | 'archivos' | 
 @Injectable({
   providedIn: 'root',
 })
+/** Centraliza URLs de environments y comprueba origen y limites de ruta antes de adjuntar credenciales. */
 export class ApiConfigService {
   private readonly fallbackAuthBaseUrl = environment.api.auth;
 
@@ -37,6 +38,8 @@ export class ApiConfigService {
     return this.joinUrl(this.authBaseUrl, environment.endpoints.refreshToken);
   }
 
+  /** @param url Destino HTTP.
+   * @returns Si coincide origen y limite de ruta de una base autorizada. */
   isBackendUrl(url: string): boolean {
     const candidates = this.getBackendBases();
     return candidates.some((baseUrl) => this.matchesBaseUrl(url, baseUrl));
@@ -52,6 +55,8 @@ export class ApiConfigService {
     return this.matchesBaseUrl(url, this.loginUrl);
   }
 
+  /** @param service Servicio configurado.
+   * @returns Base del environment o respaldo auth cuando no existe configuracion. */
   getApiBaseUrl(service: keyof BackendMap): string {
     const configuredBase = this.getBackendMap()[service];
     return configuredBase?.trim() || this.fallbackAuthBaseUrl;
@@ -68,6 +73,9 @@ export class ApiConfigService {
       .map((value) => value.trim());
   }
 
+  /** @param baseUrl Base del servicio.
+   * @param path Ruta relativa.
+   * @returns URL concatenada con una separacion de barra. */
   joinUrl(baseUrl: string, path: string): string {
     const normalizedBase = baseUrl.replace(/\/+$/, '');
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;

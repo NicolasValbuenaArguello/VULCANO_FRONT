@@ -78,6 +78,7 @@ export class Vulcano {
     this.destroyRef.onDestroy(() => this.lifetime.abort());
     this.mapActions.requested$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(request => {
       if (request.action === 'graficar') this.menuRef?.openGraficarWindow(request.point);
+      else if (request.action === 'limites-seguridad') this.menuRef?.openLimitesWindow();
       else this.hojaMilimetradaRef?.abrirProyeccionDesdeMapa(request.point, request.host);
       this.changeDetector.markForCheck();
     });

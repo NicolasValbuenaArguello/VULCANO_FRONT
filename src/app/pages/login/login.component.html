@@ -1,7 +1,6 @@
 <main class="login-page">
   <div class="login-page__background" aria-hidden="true">
-    <span class="login-page__grid"></span>
-    <span class="login-page__glow login-page__glow--center"></span>
+    <app-topography-background [config]="topographyConfig"></app-topography-background>
   </div>
 
   <section class="screen screen--welcome" [class.screen--active]="!showLogin" [class.screen--inactive]="showLogin"

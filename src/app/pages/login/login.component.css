@@ -18,6 +18,7 @@
 
 .login-page__background {
   position: absolute;
+  z-index: 0;
   inset: 0;
   pointer-events: none;
 }
@@ -58,6 +59,7 @@
 
 .screen {
   position: absolute;
+  z-index: 1;
   inset: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -833,4 +835,37 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+/* Distribucion de pagina: el contenido crece y el fondo permanece en el viewport. */
+.login-page__background { position: fixed; inset: 0; }
+.screen { box-sizing: border-box; grid-template-rows: auto 1fr auto; overflow: visible; gap: clamp(1rem, 2vh, 1.8rem); }
+.screen--active { position: relative; min-height: 100dvh; }
+.screen--inactive { display: none; }
+.welcome-panel { width: min(100%, 96rem); padding-bottom: 0; gap: clamp(1rem, 2vw, 1.8rem); }
+.command-panel, .institution-card { background: linear-gradient(150deg, rgba(12,18,12,.78), rgba(5,8,5,.64)); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); }
+.command-panel { padding: clamp(1.4rem, 3vh, 2.8rem) clamp(1rem, 3vw, 3rem); gap: .85rem; }
+.command-panel h1 { font-size: clamp(2.5rem, 5vw, 5rem); line-height: 1.1; letter-spacing: .12em; }
+.command-panel__seal { width: clamp(100px, 10vw, 160px); }
+.welcome-logo { width: 100%; height: 100%; object-fit: contain; }
+.command-panel .primary-action { min-height: 54px; min-width: min(100%, 320px); font-size: .95rem; }
+.institution-grid { gap: clamp(1rem, 1.5vw, 1.6rem); }
+.institution-card { padding: clamp(1.1rem, 1.7vw, 1.8rem); }
+.institutional-item { font-size: clamp(.88rem, .85vw, 1.05rem); line-height: 1.65; }
+.screen__topline, .screen__footer { width: min(100%, 96rem); }
+.topline-zone span { overflow-wrap: anywhere; }
+.login-shell { width: min(100%, 460px); padding-top: 1.8rem; margin-block: .5rem; }
+.login-card { width: 100%; max-width: none; box-sizing: border-box; padding: clamp(1.25rem, 2.5vw, 2rem); background: linear-gradient(160deg, rgba(12,18,12,.82), rgba(5,8,5,.72)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 18px 50px #0005; }
+.login-card__logo-shell { width: clamp(100px, 10vw, 140px); }
+.login-card__title h1 { font-size: clamp(2rem, 3vw, 2.8rem); }
+.field__control { min-height: 54px; }
+.field__control input { font-size: 1rem; min-height: 52px; }
+.login-form { gap: 1.15rem; }
+.login-button { min-height: 54px; font-size: 1rem; }
+@media (max-width: 720px) {
+  .institution-grid { grid-template-columns: minmax(0, 1fr); }
+  .institution-card--objectives { grid-column: auto; }
+  .command-panel h1 { letter-spacing: .05em; }
+  .institution-card__header { flex-wrap: wrap; }
+  .screen__topline--institutional { gap: .65rem; }
+  .login-card__title h1 { letter-spacing: .04em; }
 }

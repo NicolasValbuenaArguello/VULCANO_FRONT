@@ -1,3 +1,4 @@
+import { VentanaLimitesSeguridad } from '../ventana-limites-seguridad/ventana-limites-seguridad';
 import {
   AfterViewInit,
   Component,
@@ -13,6 +14,7 @@ import {
   inject,
 } from '@angular/core';
 import { Graficar } from '../graficar/graficar';
+import { VentanaSistemasArtilleria } from '../ventana-sistemas-artilleria/ventana-sistemas-artilleria';
 import { Iconos } from '../iconos/iconos';
 import { RegistroCoordenada } from '../../../core/services/vulcano-api.service';
 import { IconosService } from '../../../shared/services/iconos.service';
@@ -31,7 +33,7 @@ type FloatingWindowKey = 'graficar' | 'iconos';
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [Graficar, Iconos],
+  imports: [Graficar, Iconos, VentanaSistemasArtilleria, VentanaLimitesSeguridad],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
@@ -67,6 +69,49 @@ export class Menu implements AfterViewInit, OnDestroy {
 
   @ViewChild('floatingWindow') private readonly floatingWindowRef?: ElementRef<HTMLElement>;
   @ViewChild('iconosWindow') private readonly iconosWindowRef?: ElementRef<HTMLElement>;
+  @ViewChild(VentanaSistemasArtilleria) private sistemasWindow?: VentanaSistemasArtilleria;
+
+  limitesWindowOpen = false;
+  limitesWindowZIndex = 5300;
+  @ViewChild(VentanaLimitesSeguridad) private limitesWindow?: VentanaLimitesSeguridad;
+
+  /** Ambos menus reutilizan esta unica instancia y restauran su estado si esta minimizada. */
+  openLimitesWindow(): void {
+    this.syncFloatingWindowsHost();
+    this.limitesWindowOpen = true;
+    if (this.limitesWindow) {
+      this.limitesWindow.restore();
+      this.limitesWindow.focusWindow();
+    } else this.activateLimitesWindow();
+    this.changeDetector.markForCheck();
+  }
+
+  /** Comparte el orden visual del menu con Sistemas, Graficar e Iconos. */
+  activateLimitesWindow(): void {
+    this.limitesWindowZIndex = Math.max(this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+  }
+
+  sistemasWindowOpen = false;
+  sistemasWindowZIndex = 5200;
+
+  /** Abre una sola instancia o restaura la existente sin perder su geometria. */
+  openSistemasWindow(): void {
+    this.syncFloatingWindowsHost();
+    this.sistemasWindowOpen = true;
+    if (this.sistemasWindow) this.sistemasWindow.restore();
+    else this.activateSistemasWindow();
+    this.changeDetector.markForCheck();
+  }
+
+  /** Eleva Sistemas sobre las ventanas del menu. */
+  activateSistemasWindow(): void {
+    this.sistemasWindowZIndex = Math.max(this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+  }
+
+  /** Reutiliza la gestion de primer plano del menu para Graficar e Iconos. */
+  activateExistingWindow(windowKey: FloatingWindowKey): void {
+    this.bringWindowToFront(windowKey);
+  }
 
   /**
    * Informa al componente padre qué vista principal
@@ -85,7 +130,7 @@ export class Menu implements AfterViewInit, OnDestroy {
   // ======================================================
   readonly menuItems: MenuOption[] = [
     { id: 1, name: 'Graficar', action: 'abrir_ventana_graficacion' },
-    { id: 3, name: 'Sistemas', action: 'menu3' },//esta ventana permite caragr los sistemas asignados, trabajanos o misiosnes de fuegos realizadas y ver plan de fuegos
+    { id: 2, name: 'Sistemas', action: 'abrir-ventana-sistemas-artilleria' },//esta ventana permite caragr los sistemas asignados, trabajanos o misiosnes de fuegos realizadas y ver plan de fuegos
     { id: 4, name: '3D', action: 'cambiar_ventana' },
     { id: 5, name: '2D', action: 'cambiar_ventana' },
     { id: 6, name: 'HOJA MILIMITRADA', action: 'cambiar_ventana' },
@@ -153,6 +198,9 @@ export class Menu implements AfterViewInit, OnDestroy {
   /** Ejecuta las acciones del menu; el informe se solicita desde la Hoja Milimetrada. */
   onMenuClick(item: MenuOption): void {
     switch (item.action) {
+      case 'abrir-ventana-sistemas-artilleria':
+        this.openSistemasWindow();
+        break;
       case 'abrir_ventana_graficacion':
         this.openGraficarWindow();
         break;
@@ -195,6 +243,7 @@ export class Menu implements AfterViewInit, OnDestroy {
 
     this.graficarWindowOpen = true;
     this.setInitialGraficarWindowGeometry();
+    this.bringWindowToFront('graficar');
   }
 
   /** Conserva el cierre original y descarta la precarga para la siguiente apertura manual. */
@@ -212,6 +261,7 @@ export class Menu implements AfterViewInit, OnDestroy {
 
     this.iconosWindowOpen = true;
     this.setInitialIconosWindowGeometry();
+    this.bringWindowToFront('iconos');
   }
 
   closeIconosWindow(): void {
@@ -656,9 +706,9 @@ export class Menu implements AfterViewInit, OnDestroy {
   }
 
   private bringWindowToFront(windowKey: FloatingWindowKey): void {
-    if (windowKey === 'iconos') {
-      this.iconosWindowZIndex = Math.max(this.iconosWindowZIndex, this.graficarWindowZIndex + 100);
-    }
+    const z = Math.max(this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+    if (windowKey === 'graficar') this.graficarWindowZIndex = z;
+    else this.iconosWindowZIndex = z;
   }
 
   @HostListener('window:resize')

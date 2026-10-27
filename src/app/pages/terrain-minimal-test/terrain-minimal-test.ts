@@ -1,5 +1,8 @@
+import { inject } from '@angular/core';
+import { CartographyConfigService } from '../../shared/services/cartography-config.service';
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as maplibregl from 'maplibre-gl';
+import { environment } from '../../../environments/environment';
 import type {
   Map as MapLibreMap,
   SourceSpecification,
@@ -209,15 +212,20 @@ export class TerrainMinimalTest implements AfterViewInit, OnDestroy {
     return result;
   }
 
+  private readonly cartography = inject(CartographyConfigService);
+
   private createVariantStyle(variant: VariantName): {
     style: StyleSpecification;
     center: [number, number];
     zoom: number;
   } {
+    const base = this.cartography.mapLibreLayers()[this.cartography.resolveSelection()];
     const baseSources = {
       osm: {
         type: 'raster',
-        tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        // Comparte proveedor y atribucion con los mapas principales, sin endpoints alternativos.
+        tiles: base.tiles,
+        attribution: base.attribution,
         tileSize: 256,
         maxzoom: 19,
       },
