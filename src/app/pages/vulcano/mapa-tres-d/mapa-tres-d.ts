@@ -4,7 +4,8 @@ import { MapLibreMeasurementAdapter } from '../../../shared/components/geographi
 import { ApplicationRef, EnvironmentInjector } from '@angular/core';
 import { attachMeasurementTools } from '../../../shared/components/geographic-measurement/measurement-overlay';
 import { createMapLayersHeader, MAP_LAYERS_ICON, observeMapLayersViewport } from '../../../shared/components/map-layers/map-layers-ui';
-import { MapActionsService, mapActionTarget } from '../../../shared/components/map-context-menu/map-actions.service';
+import { MapActionsService, mapActionTarget, validGeographicPoint } from '../../../shared/components/map-context-menu/map-actions.service';
+import { PuntoCapturaVisual } from '../../../shared/models/punto-captura-visual.model';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -24,6 +25,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as maplibregl from 'maplibre-gl';
+import { MapLibrePointLayer } from '../../../shared/geographic-points/point-layers';
 import { construirTrayectoria3D } from './trayectoria-3d';
 import type {
   IControl,
@@ -36,6 +38,8 @@ import { environment } from '../../../../environments/environment';
 import { ElementoMapa } from '../../../shared/models/elemento-mapa.model';
 import { MapaElementosService } from '../../../shared/services/mapa-elementos.service';
 import { RelacionFijada } from '../../../shared/models/relacion-fijada.model';
+import type { FeaturePoligono } from
+  '../ventana-limites-seguridad/ventana-limites-seguridad';
 
 type BaseMapId = 'streets' | 'satellite' | 'topographic' | 'light' | 'dark';
 type BaseMapType = 'raster' | 'style';
@@ -146,6 +150,14 @@ interface DemRealTileCheck {
 }
 
 class BaseMapControl implements IControl {
+
+  // ======================================================
+// LÍMITES DE SEGURIDAD - GEOJSON
+// ======================================================
+
+
+
+
   private map: MapLibreMap | null = null;
   private container: HTMLDivElement | null = null;
   private button: HTMLButtonElement | null = null;
@@ -319,6 +331,26 @@ class BaseMapControl implements IControl {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
+  @Input() puntosGeograficos: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+  private readonly puntosLayer = new MapLibrePointLayer();
+  /** Invalida solo la disponibilidad del estilo de PUNTOS durante su sustitucion. */
+  private readonly handlePuntosStyleLoading = (): void => this.puntosLayer.styleLoading();
+
+  // ======================================================
+// LÍMITES DE SEGURIDAD - GEOJSON
+// ======================================================
+
+private readonly LIMITES_SOURCE_ID = 'limites-seguridad-source';
+private readonly LIMITES_FILL_ID = 'limites-seguridad-fill';
+private readonly LIMITES_LINE_ID = 'limites-seguridad-line';
+
+/**
+ * Coleccion de GeoJSON finalizados recibida desde el componente padre.
+ * Permite recuperar los poligonos cuando se inicializa
+ * el mapa 3D o se modifica su estilo.
+ */
+@Input() poligonosLimites: readonly FeaturePoligono[] = [];
+
   // ======================================================
   // CONFIGURACIÓN
   // ======================================================
@@ -421,6 +453,42 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
   @Input() relacionFijada: RelacionFijada | null = null;
   @Input() simulacionTrayectoria: SimulacionTrayectoriaResponse | null = null;
   @Input() registrosCoordenadas: readonly RegistroCoordenada[] = [];
+  @Input() puntosCapturaVisual: readonly PuntoCapturaVisual[] = [];
+  @Output() mapClick = new EventEmitter<{ lat: number; lng: number }>();
+
+  private readonly marcadoresVistaPrevia = new Map<number, maplibregl.Marker>();
+
+  /** Representacion local del historial compartido; independiente de estilos y capas operativas. */
+  private renderVistaPrevia(): void {
+    if (!this.map) return;
+    const puntos = this.puntosCapturaVisual.filter(validGeographicPoint);
+    const ids = new Set(puntos.map(point => point.id));
+    for (const [id, marker] of this.marcadoresVistaPrevia) {
+      if (!ids.has(id)) {
+        marker.remove();
+        this.marcadoresVistaPrevia.delete(id);
+      }
+    }
+    for (const point of puntos) {
+      const existing = this.marcadoresVistaPrevia.get(point.id);
+      if (existing) {
+        existing.setLngLat([point.longitud, point.latitud]);
+        if (existing.getElement().parentElement !== this.map.getCanvasContainer()) existing.addTo(this.map);
+        continue;
+      }
+      const element = document.createElement('div');
+      element.className = 'coordinate-preview-marker-3d';
+      element.setAttribute('aria-label', `P${point.id}`);
+      element.style.cssText = 'width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#2879eb;border:2px solid #fff;pointer-events:none';
+      const label = document.createElement('span');
+      label.textContent = `P${point.id}`;
+      label.style.cssText = 'position:absolute;bottom:19px;left:50%;transform:translateX(-50%);padding:2px 5px;background:#14261d;border:1px solid #72966a;border-radius:3px;color:#dce7d0;font:600 11px system-ui,sans-serif;white-space:nowrap;pointer-events:none';
+      element.appendChild(label);
+      const marker = new maplibregl.Marker({ element, anchor: 'center', pitchAlignment: 'viewport', rotationAlignment: 'viewport' })
+        .setLngLat([point.longitud, point.latitud]).addTo(this.map);
+      this.marcadoresVistaPrevia.set(point.id, marker);
+    }
+  }
 
   // ======================================================
   // OUTPUTS
@@ -677,7 +745,12 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     if (!this.map) {
       return;
     }
-
+    if (changes['puntosGeograficos']) this.puntosLayer.sync(this.map, this.puntosGeograficos);
+    if (changes['puntosCapturaVisual']) this.renderVistaPrevia();
+  // Actualiza el GeoJSON cuando cambia desde VULCANO.
+  if (changes['poligonosLimites']) {
+    this.sincronizarLimitesSeguridad(true);
+  }
     if (this.terrainDiagnosticMode) {
       this.logPitch('ngOnChanges:diagnostic-ignored');
       return;
@@ -789,6 +862,7 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     }
 
     this.bindMapEvents();
+    this.renderVistaPrevia();
     this.addControls();
     this.disposeMeasurementTools = attachMeasurementTools(container, this.measurementApp, this.measurementInjector, true);
     this.measurementAdapter = new MapLibreMeasurementAdapter(this.map!, this.measurements);
@@ -838,12 +912,25 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     }
 
     this.map.on('style.load', this.handleStyleLoad);
+    this.map.on('styledataloading', this.handlePuntosStyleLoading);
+    this.map.on('click', this.handleMapClick);
     this.map.on('sourcedata', this.handleSourceData);
     this.map.on('contextmenu', this.handleMapContextMenu);
     for (const type of ['movestart', 'zoomstart', 'rotatestart']) this.map.on(type, this.closeMapContextMenu);
   }
 
   /** Usa el picking de superficie de MapLibre con terrain y descarta cielo u horizontes sin interseccion. */
+  private readonly handleMapClick = (event: maplibregl.MapMouseEvent): void => {
+    if (!this.map || event.defaultPrevented || !mapActionTarget(event.originalEvent.target)) return;
+    if (!Number.isFinite(event.point.x) || !Number.isFinite(event.point.y)) return;
+    if (!this.map.transform.isPointOnMapSurface(event.point, this.map.terrain)) return;
+    const coordinate = this.map.unproject(event.point);
+    const point = Math.abs(coordinate.lng) <= 180 ? coordinate : coordinate.wrap();
+    if (!validGeographicPoint({ latitud: point.lat, longitud: point.lng })) return;
+    this.zone.run(() => this.mapClick.emit({ lat: point.lat, lng: point.lng }));
+  };
+
+  /** Usa el picking existente tambien para el menu contextual. */
   private readonly handleMapContextMenu = (event: maplibregl.MapMouseEvent): void => {
     if (!this.map || event.defaultPrevented || !mapActionTarget(event.originalEvent.target)) return;
     if (!Number.isFinite(event.point.x) || !Number.isFinite(event.point.y)) return;
@@ -943,6 +1030,8 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     if (!this.map) {
       return;
     }
+    this.puntosLayer.sync(this.map, this.puntosGeograficos, true);
+    this.renderVistaPrevia();
 
     this.styleInitialized = true;
     this.mapPerformance.styleLoadAt = performance.now();
@@ -967,7 +1056,7 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     this.map.setProjection({
       type: 'mercator',
     });
-
+this.sincronizarLimitesSeguridad();
     if (this.vista3DActiva || this.demActivationPending) {
       requestAnimationFrame(() => {
         this.configurarDem();
@@ -985,10 +1074,16 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     if (!this.map) {
       return;
     }
+    this.puntosLayer.sync(this.map, this.puntosGeograficos, true);
 
-    this.styleInitialized = true;
-    this.mapaListo = true;
-    this.sincronizarRegistrosCoordenadas();
+this.styleInitialized = true;
+this.mapaListo = true;
+
+// Recupera el polígono si llegó antes de cargar MapLibre.
+this.sincronizarLimitesSeguridad();
+
+// Sincroniza los registros existentes.
+this.sincronizarRegistrosCoordenadas();
     console.log('[APOGEO-3D][MAP READY]', this.map !== undefined);
     this.zone.run(() => {
       this.loading = false;
@@ -2868,6 +2963,8 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     if (!this.map) {
       return;
     }
+    // Reutiliza las mismas representaciones al volver a 3D, sin duplicarlas ni modificar la camara.
+    this.puntosLayer.sync(this.map, this.puntosGeograficos);
 
     if (this.DEBUG_MAP) {
       console.log('[DEM MODE]', {
@@ -4763,6 +4860,11 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
   // ======================================================
 
   ngOnDestroy(): void {
+    this.puntosLayer.dispose();
+    this.map?.off('styledataloading', this.handlePuntosStyleLoading);
+    for (const marker of this.marcadoresVistaPrevia.values()) marker.remove();
+    this.marcadoresVistaPrevia.clear();
+    this.map?.off('click', this.handleMapClick);
     this.disposeMeasurementTools?.();
     this.measurementAdapter?.destroy();
     this.closeMapContextMenu();
@@ -5000,4 +5102,45 @@ export class MapaTresD implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     for (const marker of this.registroMarkers.values()) marker.remove();
     this.registroMarkers.clear();
   }
+  /**
+ * Recibe el GeoJSON generado desde Límites de Seguridad
+ * y solicita su representación sobre el mapa 3D.
+ */
+/** Entrada imperativa compatible: agrega sin reemplazar el historial. */
+public graficarPoligono(poligono: FeaturePoligono): void {
+  if (!this.poligonosLimites.some(p => p === poligono || (!!p.id && p.id === poligono.id))) {
+    this.poligonosLimites = [...this.poligonosLimites, poligono];
+  }
+  this.sincronizarLimitesSeguridad(true);
+}
+
+/** Restaura la coleccion completa en style.load; dos capas con estilo por geometria. */
+private sincronizarLimitesSeguridad(centrar = false): void {
+  const map = this.map;
+  if (!map || !this.poligonosLimites.length || !map.isStyleLoaded()) return;
+  const data: GeoJSON.FeatureCollection<GeoJSON.Polygon> = {
+    type: 'FeatureCollection',
+    features: this.poligonosLimites.map(p => ({ ...p,
+      properties: { ...p.properties, ...p.properties.estilo },
+    })),
+  };
+  const source = map.getSource(this.LIMITES_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+  if (source) source.setData(data);
+  else map.addSource(this.LIMITES_SOURCE_ID, { type: 'geojson', data });
+  if (!map.getLayer(this.LIMITES_FILL_ID)) map.addLayer({
+    id: this.LIMITES_FILL_ID, type: 'fill', source: this.LIMITES_SOURCE_ID,
+    paint: { 'fill-color': ['get', 'colorRelleno'], 'fill-opacity': ['get', 'opacidadRelleno'] },
+  });
+  if (!map.getLayer(this.LIMITES_LINE_ID)) map.addLayer({
+    id: this.LIMITES_LINE_ID, type: 'line', source: this.LIMITES_SOURCE_ID,
+    paint: { 'line-color': ['get', 'colorLinea'], 'line-width': ['get', 'grosorLinea'],
+      'line-opacity': ['get', 'opacidadLinea'] },
+  });
+  if (centrar) {
+    const bounds = new maplibregl.LngLatBounds();
+    for (const position of this.poligonosLimites.at(-1)!.geometry.coordinates[0]) bounds.extend(position);
+    if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 700 });
+  }
+  map.triggerRepaint();
+}
 }

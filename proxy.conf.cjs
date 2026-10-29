@@ -13,6 +13,8 @@ console.info(
 );
 
 module.exports = {
+  // Servicio GIS independiente; conserva su prefijo y no toca coordenadas.
+  '/api/gis/**': { target: 'http://127.0.0.1:8026', changeOrigin: true },
 
   // ==========================================
   // COORDENADAS

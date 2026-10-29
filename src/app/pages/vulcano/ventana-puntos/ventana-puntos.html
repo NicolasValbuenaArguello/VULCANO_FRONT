@@ -1,0 +1,92 @@
+<section #dialog tabindex="-1" class="systems-window" role="dialog" aria-label="PUNTOS"
+  [style.left.px]="rect.x" [style.top.px]="rect.y" [style.width.px]="rect.width"
+  [style.height.px]="manager.get(id)!.minimized ? null : rect.height" [style.z-index]="zIndex"
+  (pointerdown)="activated.emit(); $event.stopPropagation()" (wheel)="$event.stopPropagation()"
+  (dblclick)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+  <header class="floating-window__header" (pointerdown)="startPointer($event)">
+    <span class="floating-window__title">PUNTOS</span>
+    <div class="systems-actions" (pointerdown)="$event.stopPropagation()">
+      <button type="button" class="floating-window__close"
+        [attr.aria-label]="manager.get(id)!.minimized ? 'Restaurar ventana' : 'Minimizar ventana'"
+        [title]="manager.get(id)!.minimized ? 'Restaurar' : 'Minimizar'"
+        (click)="manager.get(id)!.minimized ? restore() : minimize()">{{ manager.get(id)!.minimized ? '↗' : '—' }}</button>
+      <button type="button" class="floating-window__close"
+        [attr.aria-label]="manager.get(id)!.maximized ? 'Restaurar tamaño' : 'Maximizar ventana'"
+        [title]="manager.get(id)!.maximized ? 'Restaurar tamaño' : 'Maximizar'"
+        (click)="toggleMaximize()">{{ manager.get(id)!.maximized ? '❐' : '□' }}</button>
+      <button type="button" class="floating-window__close" aria-label="Cerrar ventana" title="Cerrar" (click)="close()">✕</button>
+    </div>
+  </header>
+  <div class="floating-window__content puntos-content" [hidden]="manager.get(id)!.minimized">
+    <div class="points-heading" role="status" aria-live="polite">
+      @if (remote.operacion(); as operation) { <span>{{ operation === 'cargando' ? 'Cargando puntos…' : operation === 'guardando' ? 'Guardando…' : operation === 'actualizando' ? 'Actualizando…' : 'Eliminando…' }}</span> }
+      @if (remote.error(); as error) { <span class="points-error">{{ error }}</span> }
+      <button type="button" [disabled]="remote.ocupado()" (click)="remote.cargar()">RECARGAR LISTADO</button>
+      @if (remote.creacionPendiente()) { <button type="button" [disabled]="remote.ocupado()" (click)="comprobarCreacion()">COMPROBAR REGISTRO</button> }
+    </div>
+    <fieldset class="points-editor" [disabled]="remote.ocupado()">
+    <legend class="points-hint">{{ editando ? 'Borrador de actualización · pendiente de confirmar' : 'Nuevo borrador · sin guardar' }}</legend>
+    <div class="points-workspace">
+      <div class="points-config">
+        <section class="points-panel"><h2>IDENTIFICACIÓN</h2>
+          <label>Nombre del punto *<input required maxlength="100" [(ngModel)]="nombre" placeholder="Nombre obligatorio" /></label>
+          <label>Observaciones<textarea maxlength="2000" rows="2" [(ngModel)]="observaciones" placeholder="Opcional"></textarea></label>
+        </section>
+        <section class="points-panel"><div class="points-heading"><h2>COORDENADAS · WGS84</h2>
+          <button type="button" class="points-blue" [attr.aria-pressed]="state.captura()" (click)="seleccionarMapa()">{{ state.captura() ? 'CANCELAR SELECCIÓN' : 'SELECCIONAR EN MAPA' }}</button></div>
+          @if (state.captura()) { <p class="points-hint" role="status">CAPTURA ACTIVA · Haga clic en el mapa 2D o 3D. Una selección.</p> }
+          <div class="points-coords">
+            <span></span><span>HEM.</span><span>GRD</span><span>MIN</span><span>SEG</span><span>DECIMAL</span>
+            <span>LAT</span><select aria-label="Hemisferio latitud" [(ngModel)]="latDms.hemisferio" (ngModelChange)="cambiarDms(true)"><option>N</option><option>S</option></select>
+            <input appCoordinateSelect type="number" min="0" max="90" aria-label="Grados latitud" [(ngModel)]="latDms.grados" (ngModelChange)="cambiarDms(true)" />
+            <input appCoordinateSelect type="number" min="0" max="59" aria-label="Minutos latitud" [(ngModel)]="latDms.minutos" (ngModelChange)="cambiarDms(true)" />
+            <input appCoordinateSelect type="number" min="0" max="59.999999" step="any" aria-label="Segundos latitud" [(ngModel)]="latDms.segundos" (ngModelChange)="cambiarDms(true)" />
+            <input appCoordinateSelect type="number" min="-90" max="90" step="any" aria-label="Latitud decimal" [(ngModel)]="latitud" (ngModelChange)="cambiarDecimal(true)" />
+            <span>LON</span><select aria-label="Hemisferio longitud" [(ngModel)]="lonDms.hemisferio" (ngModelChange)="cambiarDms(false)"><option>W</option><option>E</option></select>
+            <input appCoordinateSelect type="number" min="0" max="180" aria-label="Grados longitud" [(ngModel)]="lonDms.grados" (ngModelChange)="cambiarDms(false)" />
+            <input appCoordinateSelect type="number" min="0" max="59" aria-label="Minutos longitud" [(ngModel)]="lonDms.minutos" (ngModelChange)="cambiarDms(false)" />
+            <input appCoordinateSelect type="number" min="0" max="59.999999" step="any" aria-label="Segundos longitud" [(ngModel)]="lonDms.segundos" (ngModelChange)="cambiarDms(false)" />
+            <input appCoordinateSelect type="number" min="-180" max="180" step="any" aria-label="Longitud decimal" [(ngModel)]="longitud" (ngModelChange)="cambiarDecimal(false)" />
+          </div><p class="points-hint">Grados decimales · EPSG:4326. La selección no registra el punto.</p>
+        </section>
+        <section class="points-panel"><h2>ESTILO Y RADIO</h2><div class="points-style">
+          <label>Radio (m)<input appCoordinateSelect type="number" min="1" max="100000" [(ngModel)]="estilo.radio" /></label>
+          <label>Relleno<input type="color" [(ngModel)]="estilo.relleno" /></label>
+          <label>Opacidad (0–1)<input type="number" min="0" max="1" step="0.05" [(ngModel)]="estilo.opacidad" /></label>
+          <label>Contorno<input type="color" [(ngModel)]="estilo.linea" /></label>
+          <label>Grosor (px)<input type="number" min="1" max="12" [(ngModel)]="estilo.grosor" /></label>
+          <label>Marcador<input type="color" [(ngModel)]="estilo.marcador" /></label>
+          <label>Tamaño (px)<input type="number" min="3" max="20" [(ngModel)]="estilo.tamano" /></label>
+        </div><div class="points-preview"><svg viewBox="0 0 200 160" role="img" aria-label="Vista previa esquemática del punto y su círculo">
+          <path d="M0 80H200 M100 0V160" stroke="#35492b" />
+          <circle cx="100" cy="80" [attr.r]="previewRadius" [attr.fill]="estilo.relleno" [attr.fill-opacity]="estilo.opacidad" [attr.stroke]="estilo.linea" [attr.stroke-width]="estilo.grosor" />
+          <circle cx="100" cy="80" [attr.r]="estilo.tamano" [attr.fill]="estilo.marcador" stroke="white" stroke-width="2" />
+        </svg><span>Radio {{ estilo.radio }} m · Vista esquemática</span></div></section>
+        <div class="points-buttons"><button type="button" class="points-blue" [disabled]="!remote.cargado() || remote.creacionPendiente()" (click)="agregar()">{{ editando ? 'ACTUALIZAR PUNTO' : 'AGREGAR PUNTO' }}</button><button type="button" (click)="nuevo()">NUEVO</button></div>
+      </div>
+      <div class="points-list">
+        <section class="points-panel"><div class="points-heading"><h2>PUNTOS REGISTRADOS</h2><span>{{ state.registros().length }} PUNTOS</span></div>
+          <div class="points-table"><table><thead><tr><th>N.º</th><th>Nombre</th><th>Coordenadas</th><th>Radio</th><th>Acción</th></tr></thead><tbody>
+          @for (p of state.registros(); track p.id; let i = $index) {
+            <tr [class.points-selected]="state.seleccion() === p.id"><td>{{ i + 1 }}</td><td>{{ p.nombre }}</td><td>{{ p.latitud.toFixed(6) }}<br />{{ p.longitud.toFixed(6) }}</td><td>{{ p.radio }} m</td><td class="points-actions">
+              <button type="button" [attr.aria-label]="'Ver ' + p.nombre" (click)="ver(p)">Ver</button><button type="button" [attr.aria-label]="'Editar ' + p.nombre" (click)="editar(p)">Editar</button><button type="button" [attr.aria-label]="'Eliminar ' + p.nombre" (click)="eliminar(p)">Eliminar</button>
+            </td></tr>
+          } @empty { <tr><td colspan="5">Sin puntos registrados.</td></tr> }
+          </tbody></table></div>
+        </section>
+        <section class="points-panel"><h2>INFORMACIÓN GEOGRÁFICA</h2>
+          @if (seleccionado(); as p) { <dl><dt>Nombre</dt><dd>{{ p.nombre }}</dd><dt>Ubicación WGS84</dt><dd>{{ p.latitud.toFixed(6) }}, {{ p.longitud.toFixed(6) }}</dd><dt>Radio</dt><dd>{{ p.radio }} metros</dd><dt>Observaciones</dt><dd>{{ p.observaciones || 'Sin observaciones' }}</dd></dl> }
+          @else { <p>Seleccione Ver en una fila.</p> }
+        </section>
+        <p class="points-hint">Representación cartográfica general. Solo se muestran registros confirmados. Se recuperan del servidor después de iniciar sesión, también al recargar la página.</p>
+      </div>
+    </div>
+    </fieldset>
+    <footer class="points-footer"><span role="status">{{ mensaje }}</span><button type="button" class="points-gold" [disabled]="!state.registros().length || remote.ocupado()" (click)="state.graficar(); mensaje = 'PUNTOS GRAFICADOS'">GRAFICAR PUNTOS</button></footer>
+  </div>
+  @if (!manager.get(id)!.minimized && !manager.get(id)!.maximized) {
+    @for (edge of edges; track edge) {
+      <div [class]="'systems-resize systems-resize--' + edge" aria-hidden="true" (pointerdown)="startPointer($event, edge)"></div>
+    }
+  }
+</section>

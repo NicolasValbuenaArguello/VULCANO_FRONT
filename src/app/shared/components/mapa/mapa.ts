@@ -3,7 +3,8 @@ import { MeasurementService } from '../geographic-measurement/measurement.servic
 import { LeafletMeasurementAdapter } from '../geographic-measurement/measurement-adapters';
 import { ApplicationRef, EnvironmentInjector } from '@angular/core';
 import { attachMeasurementTools } from '../geographic-measurement/measurement-overlay';
-import { MapActionsService } from '../map-context-menu/map-actions.service';
+import { MapActionsService, validGeographicPoint } from '../map-context-menu/map-actions.service';
+import { PuntoCapturaVisual } from '../../models/punto-captura-visual.model';
 import { createMapLayersHeader, MAP_LAYERS_ICON, observeMapLayersViewport } from '../map-layers/map-layers-ui';
 import {
   AfterViewInit,
@@ -21,11 +22,15 @@ import {
   inject,
 } from '@angular/core';
 import * as L from 'leaflet';
+import { LeafletPointLayer } from '../../geographic-points/point-layers';
 import { environment } from '../../../../environments/environment';
 import { ElementoMapa } from '../../models/elemento-mapa.model';
 import { RelacionFijada } from '../../models/relacion-fijada.model';
 import { RegistroCoordenada, SimulacionTrayectoriaResponse } from '../../../core/services/vulcano-api.service';
 import { MapaElementosService } from '../../services/mapa-elementos.service';
+import {
+  FeaturePoligono
+} from '../../../pages/vulcano/ventana-limites-seguridad/ventana-limites-seguridad';
 
 type LeafletMapConfig = {
   center: L.LatLngExpression;
@@ -71,7 +76,11 @@ export function camposCoordenadasInvalidos(elemento: ElementoMapa): string[] {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
+  @Input() puntosGeograficos: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+  private readonly puntosLayer = new LeafletPointLayer();
   private readonly cartography = inject(CartographyConfigService);
+  private readonly capasLimitesSeguridad = new Map<string | FeaturePoligono, L.GeoJSON>();
+  @Input() poligonosLimites: readonly FeaturePoligono[] = [];
   // ======================================================
   // INPUTS
   // ======================================================
@@ -112,6 +121,32 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() relacionFijada: RelacionFijada | null = null;
   @Input() simulacionTrayectoria: SimulacionTrayectoriaResponse | null = null;
   @Input() registrosCoordenadas: readonly RegistroCoordenada[] = [];
+  @Input() puntosCapturaVisual: readonly PuntoCapturaVisual[] = [];
+  private readonly marcadoresVistaPrevia = new Map<number, L.CircleMarker>();
+
+  /** Capa de demostracion independiente, sin eventos ni registros operativos. */
+  private renderVistaPrevia(): void {
+    if (!this.map) return;
+    const puntos = this.puntosCapturaVisual.filter(validGeographicPoint);
+    const ids = new Set(puntos.map(point => point.id));
+    for (const [id, marker] of this.marcadoresVistaPrevia) {
+      if (!ids.has(id)) {
+        marker.remove();
+        this.marcadoresVistaPrevia.delete(id);
+      }
+    }
+    for (const point of puntos) {
+      if (this.marcadoresVistaPrevia.has(point.id)) continue;
+      const marker = L.circleMarker([point.latitud, point.longitud], {
+        radius: 6, color: '#ffffff', weight: 2, fillColor: '#2879eb', fillOpacity: 1,
+        interactive: false, pane: 'overlayPane', className: 'coordinate-preview-marker',
+      }).bindTooltip(`P${point.id}`, {
+        permanent: true, direction: 'top', offset: [0, -7],
+        interactive: false, pane: 'overlayPane', className: 'coordinate-preview-label',
+      }).addTo(this.map);
+      this.marcadoresVistaPrevia.set(point.id, marker);
+    }
+  }
 
   // ======================================================
   // OUTPUTS
@@ -174,12 +209,25 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.observeContainerResize();
       this.renderRegistros(this.registrosCoordenadas);
     });
+      this.zone.runOutsideAngular(() => {
+    this.initializeMap();
+
+    this.sincronizarPoligonosLimites();
+
+    this.renderRelacion();
+    this.observeContainerResize();
+    this.renderRegistros(this.registrosCoordenadas);
+  });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.map) {
       return;
     }
+    if (changes['puntosGeograficos']) this.puntosLayer.sync(this.map, this.puntosGeograficos);
+    if (changes['poligonosLimites']) this.sincronizarPoligonosLimites(true);
+
+    if (changes['puntosCapturaVisual']) this.renderVistaPrevia();
 
     if (changes['center'] || changes['zoom']) {
       this.setView(this.center, this.zoom);
@@ -202,6 +250,11 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.puntosLayer.dispose();
+    for (const layer of this.capasLimitesSeguridad.values()) layer.remove();
+    this.capasLimitesSeguridad.clear();
+    for (const marker of this.marcadoresVistaPrevia.values()) marker.remove();
+    this.marcadoresVistaPrevia.clear();
     this.disposeMeasurementTools?.();
     this.measurementAdapter?.destroy();
     if (this.map) this.mapActions.closeFor(this.map.getContainer());
@@ -246,6 +299,8 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
 
     this.initializeBaseMaps();
     this.bindMapEvents();
+    this.puntosLayer.sync(this.map, this.puntosGeograficos);
+    this.renderVistaPrevia();
     this.disposeMeasurementTools = attachMeasurementTools(container, this.measurementApp, this.measurementInjector);
     this.measurementAdapter = new LeafletMeasurementAdapter(this.map!, this.measurements);
     this.refreshMapSize();
@@ -860,4 +915,40 @@ export class MapaComponent implements AfterViewInit, OnChanges, OnDestroy {
     const config = this.buildBaseMapConfigs().find((item) => item.name === name);
     return config?.key ?? null;
   }
+
+/**
+ * Dibuja un polígono GeoJSON sobre el mapa Leaflet 2D.
+ *
+ * @param poligono GeoJSON generado desde Límites de Seguridad.
+ */
+/** Agrega una geometria finalizada sin sustituir las ya visibles. */
+public graficarPoligono(poligono: FeaturePoligono): void {
+  if (!this.poligonosLimites.some(p => p === poligono || (!!p.id && p.id === poligono.id))) {
+    this.poligonosLimites = [...this.poligonosLimites, poligono];
+  }
+  this.sincronizarPoligonosLimites(true);
+}
+
+/** Solo incorpora identidades nuevas; el reinicio del editor no elimina estas capas. */
+private sincronizarPoligonosLimites(centrar = false): void {
+  if (!this.map) return;
+  let nueva: L.GeoJSON | undefined;
+  for (const poligono of this.poligonosLimites) {
+    const key = poligono.id ?? poligono;
+    if (this.capasLimitesSeguridad.has(key)) continue;
+    const estilo = poligono.properties.estilo;
+    const layer = L.geoJSON(poligono, { style: {
+      color: estilo.colorLinea, weight: estilo.grosorLinea, opacity: estilo.opacidadLinea,
+      fillColor: estilo.colorRelleno, fillOpacity: estilo.opacidadRelleno,
+    }}).addTo(this.map);
+    const nombre = document.createElement('span');
+    nombre.textContent = poligono.properties.nombre;
+    layer.bindPopup(nombre);
+    this.capasLimitesSeguridad.set(key, layer);
+    nueva = layer;
+  }
+  if (centrar && nueva?.getBounds().isValid()) {
+    this.map.fitBounds(nueva.getBounds(), { padding: [40, 40], maxZoom: 16 });
+  }
+}
 }

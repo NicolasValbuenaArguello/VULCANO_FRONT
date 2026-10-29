@@ -3,13 +3,32 @@ import { AuthService } from '../../core/auth/auth.service';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
 import { LoginComponent } from './login.component';
 import { authInterceptor } from '../../core/interceptors/auth.interceptor';
 import { errorInterceptor } from '../../core/interceptors/error.interceptor';
 
 describe('Login submission', () => {
+  it.each([
+    ['/home?tab=perfil#datos', '/home?tab=perfil#datos'],
+    ['https://example.com', '/home'], ['//example.com', '/home'],
+    ['/\\example.com', '/home'], ['/login?returnUrl=/home', '/home'],
+    ['/%6cogin', '/home'], ['/%2fexample.com', '/home'],
+  ])('validates returnUrl %s before navigating', (returnUrl, expected) => {
+    TestBed.configureTestingModule({ imports: [LoginComponent], providers: [
+      provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
+      { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({ returnUrl }) } } },
+    ] });
+    const fixture = TestBed.createComponent(LoginComponent), c = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    c['form'].patchValue({ usuario: 'tester', password: 'password' });
+    c['login']();
+    http.expectOne('/api/auth/token').flush(loginFixture());
+    expect(navigate).toHaveBeenCalledWith(expected);
+    http.verify(); fixture.destroy(); vi.restoreAllMocks();
+  });
   it('sends one request while pending and allows retry after a 401', () => {
     localStorage.clear();
     TestBed.configureTestingModule({

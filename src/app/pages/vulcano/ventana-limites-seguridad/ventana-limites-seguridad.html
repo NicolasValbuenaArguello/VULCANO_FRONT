@@ -1,5 +1,5 @@
-﻿<section #dialog tabindex="-1" class="systems-window" role="dialog" aria-label="LÍMITES DE SEGURIDAD" [style.left.px]="rect.x"
-  [style.top.px]="rect.y" [style.width.px]="rect.width"
+<section #dialog tabindex="-1" class="systems-window" role="dialog" aria-label="LÍMITES DE SEGURIDAD"
+  [style.left.px]="rect.x" [style.top.px]="rect.y" [style.width.px]="rect.width"
   [style.height.px]="manager.get(id)!.minimized ? null : rect.height" [style.z-index]="zIndex"
   (pointerdown)="activated.emit(); $event.stopPropagation()" (wheel)="$event.stopPropagation()"
   (dblclick)="$event.stopPropagation()" (click)="$event.stopPropagation()">
@@ -19,12 +19,200 @@
         (click)="close()">✕</button>
     </div>
   </header>
-  <div class="floating-window__content" [hidden]="manager.get(id)!.minimized">
-    <div class="limits-placeholder">
-      <h2>Módulo de límites de seguridad</h2>
-      <p>Espacio reservado para futuras funcionalidades.</p>
+
+
+  <div class="floating-window__content limits-content" [hidden]="manager.get(id)!.minimized">
+
+    <div class="limits-workspace">
+
+      <!-- PANEL IZQUIERDO -->
+      <div class="limits-left">
+
+        <!-- NOMBRE -->
+        <div class="limits-panel">
+          <div class="limits-panel-title">IDENTIFICACIÓN DEL POLÍGONO</div>
+          <label class="limits-label" for="limite-nombre">NOMBRE</label>
+          <input id="limite-nombre" class="limits-input" type="text" placeholder="Nombre del polígono" [(ngModel)]="nombrePoligono" (ngModelChange)="invalidarResultado()" required />
+        </div>
+
+        <!-- COORDENADAS -->
+        <div class="limits-panel">
+          <div class="limits-panel-heading">
+            <span>＋ COORDENADAS</span>
+            <button type="button" class="limits-btn limits-capture-toggle"
+              [class.limits-capture-toggle--active]="capturaCoordenadasActiva"
+              [attr.aria-pressed]="capturaCoordenadasActiva"
+              aria-label="Captura visual de coordenadas"
+              aria-describedby="limits-capture-status"
+              (click)="capturaCoordenadasActivaChange.emit(!capturaCoordenadasActiva)">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3l14 9-7 1-3 7z" /></svg>
+              {{ capturaCoordenadasActiva ? 'ACTIVADA' : 'DESACTIVADA' }}
+            </button>
+            <button type="button" class="limits-btn limits-btn-muted limits-clear-preview"
+              [disabled]="cantidadCapturasVisuales === 0"
+              (click)="limpiarCapturaVisual.emit()">LIMPIAR VISTA PREVIA ({{ cantidadCapturasVisuales }})</button>
+            <button type="button" class="limits-btn limits-btn-blue" (click)="agregarPunto()">
+              {{ indiceEdicion === null ? '+ AGREGAR PUNTO' : 'ACTUALIZAR PUNTO' }}
+            </button>
+          </div>
+
+          <p id="limits-capture-status" class="limits-capture-status" role="status">{{ capturaCoordenadasActiva ? 'VISTA PREVIA ACTIVA · Cada clic en el mapa 2D o 3D agrega un punto.' : 'VISTA PREVIA DESACTIVADA · Marcadores y coordenadas conservados.' }}</p>
+          <div class="limits-coord-grid">
+            <span>HEMISFERIO</span>
+            <span>GRD</span>
+            <span>MIN</span>
+            <span>SEG</span>
+            <span>COORDENADA DECIMAL</span>
+
+            <select class="limits-input" aria-label="Hemisferio latitud" [(ngModel)]="latHemisferio">
+              <option>N</option>
+              <option>S</option>
+            </select>
+            <input appCoordinateSelect class="limits-input" type="number" [(ngModel)]="latGrados" min="0" max="90" step="1" aria-label="Grados latitud" />
+            <input appCoordinateSelect class="limits-input" type="number" [(ngModel)]="latMinutos" min="0" max="59" step="1" aria-label="Minutos latitud" />
+            <input appCoordinateSelect class="limits-input" type="number" [(ngModel)]="latSegundos" min="0" max="59.999999" step="any" aria-label="Segundos latitud" />
+            <input appCoordinateSelect class="limits-input" type="text" [value]="latitudDecimal | number:'1.6-6':'en-US'" readonly aria-label="Latitud decimal" />
+
+            <select class="limits-input" aria-label="Hemisferio longitud" [(ngModel)]="lonHemisferio">
+              <option>W</option>
+              <option>E</option>
+            </select>
+            <input appCoordinateSelect class="limits-input" type="number" [(ngModel)]="lonGrados" min="0" max="180" step="1" aria-label="Grados longitud" />
+            <input appCoordinateSelect class="limits-input" type="number" [(ngModel)]="lonMinutos" min="0" max="59" step="1" aria-label="Minutos longitud" />
+            <input appCoordinateSelect class="limits-input" type="number" [(ngModel)]="lonSegundos" min="0" max="59.999999" step="any" aria-label="Segundos longitud" />
+            <input appCoordinateSelect class="limits-input" type="text" [value]="longitudDecimal | number:'1.6-6':'en-US'" readonly aria-label="Longitud decimal" />
+          </div>
+        </div>
+
+        <!-- VÉRTICES -->
+        <div class="limits-panel limits-vertices">
+          <div class="limits-panel-heading">
+            <span>▣ LISTADO DE VÉRTICES</span>
+            <small>{{ vertices.length }} VÉRTICES</small>
+          </div>
+
+          <div class="limits-table-wrap">
+            <table class="limits-table">
+              <thead>
+                <tr>
+                  <th>PUNTO</th>
+                  <th>LATITUD</th>
+                  <th>LONGITUD</th>
+                  <th>ACCIÓN</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of vertices; track p.id; let indice = $index) {
+                <tr [class.limits-row-editing]="indiceEdicion === indice">
+                  <td>Punto {{ indice + 1 }}</td>
+                  <td>{{ p.latitud | number:'1.6-6':'en-US' }}</td>
+                  <td>{{ p.longitud | number:'1.6-6':'en-US' }}</td>
+                  <td>
+                    <div class="limits-vertex-actions">
+                      <button type="button" class="limits-btn limits-btn-blue limits-btn-small"
+                        (click)="editarVertice(indice)" [attr.aria-label]="'Editar punto ' + (indice + 1)">EDITAR</button>
+                      <button type="button" class="limits-btn limits-btn-muted limits-btn-small"
+                        (click)="eliminarVertice(indice)" [attr.aria-label]="'Eliminar punto ' + (indice + 1)">ELIMINAR</button>
+                    </div>
+                  </td>
+                </tr>
+                } @empty {
+                  <tr><td colspan="4">SIN VERTICES. AGREGA UN PUNTO PARA COMENZAR.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ESTILOS -->
+        <div class="limits-panel">
+          <div class="limits-panel-title">◈ ESTILO Y RENDERIZADO DEL POLÍGONO</div>
+
+          <div class="limits-style-grid">
+            <div>
+              <label class="limits-label" for="color-relleno">COLOR RELLENO</label>
+              <input id="color-relleno" type="color" [(ngModel)]="estilo.colorRelleno" (ngModelChange)="invalidarResultado()" class="limits-color-picker" />
+            </div>
+            <div>
+              <label class="limits-label" for="color-linea">COLOR LÍNEA</label>
+              <input id="color-linea" type="color" [(ngModel)]="estilo.colorLinea" (ngModelChange)="invalidarResultado()" class="limits-color-picker" />
+            </div>
+            <div>
+              <label class="limits-label" for="opacidad">OPACIDAD RELLENO {{ estilo.opacidadRelleno * 100 | number:'1.0-0' }} %</label>
+              <input id="opacidad" type="range" min="0" max="1" step="0.01" [(ngModel)]="estilo.opacidadRelleno" (ngModelChange)="invalidarResultado()" class="limits-range" />
+            </div>
+            <div>
+              <label class="limits-label" for="opacidad-linea">OPACIDAD LINEA {{ estilo.opacidadLinea * 100 | number:'1.0-0' }} %</label>
+              <input id="opacidad-linea" type="range" min="0" max="1" step="0.01"
+                [(ngModel)]="estilo.opacidadLinea" (ngModelChange)="invalidarResultado()" class="limits-range" />
+            </div>
+            <div>
+              <label class="limits-label" for="grosor">GROSOR TRAZO</label>
+              <select id="grosor" class="limits-input" [(ngModel)]="estilo.grosorLinea" (ngModelChange)="invalidarResultado()">
+                <option [ngValue]="1">1 px</option>
+                <option [ngValue]="2.5">2.5 px</option>
+                <option [ngValue]="4">4 px</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL DERECHO -->
+      <div class="limits-right">
+        <div class="limits-panel limits-viewer-panel">
+
+          <div class="limits-panel-heading">
+            <span class="limits-online">● VISOR GEODÉSICO 2D // VÉRTICES</span>
+            <span class="limits-viewer-actions">{{ vertices.length }} PUNTOS</span>
+          </div>
+
+          <div class="limits-viewer">
+            @let vista = vistaPrevia;
+            <svg viewBox="0 0 500 340" preserveAspectRatio="xMidYMid meet" role="img"
+              [attr.aria-label]="'Vista previa local: ' + (nombrePoligono || 'poligono sin nombre') + ', ' + vertices.length + ' vertices'">
+
+              @if (vertices.length >= 3) {
+              <polygon [attr.points]="vista.puntos" [attr.fill]="estilo.colorRelleno"
+                [attr.fill-opacity]="estilo.opacidadRelleno" [attr.stroke]="estilo.colorLinea"
+                [attr.stroke-opacity]="estilo.opacidadLinea" [attr.stroke-width]="estilo.grosorLinea" />
+              } @else if (vertices.length >= 2) {
+                <polyline [attr.points]="vista.puntos" fill="none" [attr.stroke]="estilo.colorLinea"
+                  [attr.stroke-opacity]="estilo.opacidadLinea" [attr.stroke-width]="estilo.grosorLinea" />
+              }
+              @for (p of vista.vertices; track p.id; let indice = $index) {
+                <circle [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#ffffff" stroke="#2878ed" stroke-width="2" />
+                <text [attr.x]="p.x + 8" [attr.y]="p.y - 8" font-size="12" fill="#344054">P{{ indice + 1 }}</text>
+              }
+            </svg>
+            <span class="limits-north">N ↑</span>
+          </div>
+
+          <div class="limits-viewer-summary">
+            <span>■ {{ nombrePoligono || 'SIN NOMBRE' }}</span>
+            <span>WGS84 · EPSG:4326</span>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- BARRA INFERIOR -->
+    <footer class="limits-footer">
+      <span class="limits-status" role="status" aria-live="polite">● ESTADO: {{ mensajeEstado }}</span>
+      <div class="limits-footer-actions">
+        <button type="button" class="limits-btn limits-btn-muted" (click)="limpiarVertices()">
+          LIMPIAR VÉRTICES
+        </button>
+        <button type="button" class="limits-btn limits-btn-blue" (click)="graficar()">
+          GRAFICAR
+        </button>
+      </div>
+    </footer>
+
   </div>
+
+
+
   @if (!manager.get(id)!.minimized && !manager.get(id)!.maximized) {
   @for (edge of edges; track edge) {
   <div [class]="'systems-resize systems-resize--' + edge" aria-hidden="true" (pointerdown)="startPointer($event, edge)">

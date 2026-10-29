@@ -77,9 +77,9 @@ describe('Logout with protected shell', () => {
     expect(TestBed.inject(Router).url).toBe('/login');
     // Un intento directo o equivalente a volver a una URL anterior vuelve a pasar por el guard.
     await harness.navigateByUrl('/home');
-    expect(TestBed.inject(Router).url).toBe('/login');
+    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Fhome');
     await harness.navigateByUrl('/vulcano');
-    expect(TestBed.inject(Router).url).toBe('/login');
+    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Fvulcano');
     await login('second');
     await harness.navigateByUrl('/home');
     expect(harness.routeDebugElement!.componentInstance).not.toBe(oldShell);

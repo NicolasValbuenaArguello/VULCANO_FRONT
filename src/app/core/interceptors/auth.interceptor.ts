@@ -3,7 +3,8 @@ import { filter } from 'rxjs';
 import { inject } from '@angular/core';
 import { ApiConfigService } from '../services/api-config.service';
 import { AuthService } from '../auth/auth.service';
-import { SKIP_AUTH_INTERCEPTOR } from '../auth/auth-http-context';
+import { GIS_AUTH_DIAGNOSTIC, SKIP_AUTH_INTERCEPTOR } from '../auth/auth-http-context';
+import { environment } from '../../../environments/environment';
 
 // ======================================================
 // AUTH INTERCEPTOR
@@ -14,13 +15,34 @@ import { SKIP_AUTH_INTERCEPTOR } from '../auth/auth-http-context';
  * @param next Siguiente interceptor.
  * @returns Flujo HTTP sin renovacion ni reintentos automaticos. */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  if (req.context.get(SKIP_AUTH_INTERCEPTOR)) {
+  const apiConfig = inject(ApiConfigService);
+  const backendReconocido = apiConfig.isBackendUrl(req.url);
+  const interceptorOmitido = req.context.get(SKIP_AUTH_INTERCEPTOR);
+  let diagnosticar = (_authorizationAdjuntada: boolean): void => {};
+  if (!environment.production && req.context.get(GIS_AUTH_DIAGNOSTIC)) {
+    let url: URL | null = null;
+    try { url = new URL(req.url, location.origin); } catch { /* No altera el manejo de URLs invalidas. */ }
+    if (url && url.origin === location.origin && (url.pathname === '/api/coordenadas/limites-seguridad' ||
+      url.pathname.startsWith('/api/coordenadas/limites-seguridad/'))) {
+      const auth = inject(AuthService);
+      // Solo lectura de signals: el diagnostico no renueva, limpia ni decodifica JWT.
+      const tokenPresente = !!auth.accessToken();
+      const expiry = auth.expiresAt();
+      const estadoSesion = auth.loggingOut() ? 'cerrando' :
+        expiry !== null && Date.now() >= expiry ? 'vencida' : tokenPresente ? 'vigente-local' : 'ausente';
+      const safeUrl = url.origin + url.pathname;
+      diagnosticar = authorizationAdjuntada => console.debug('[GIS AUTH]', {
+        url: safeUrl, backendReconocido, interceptorOmitido,
+        tokenPresente, authorizationAdjuntada, estadoSesion,
+      });
+    }
+  }
+  if (interceptorOmitido) {
+    diagnosticar(req.headers.has('Authorization'));
     return next(req);
   }
-
-  const apiConfig = inject(ApiConfigService);
-
-  if (!apiConfig.isBackendUrl(req.url)) {
+  if (!backendReconocido) {
+    diagnosticar(req.headers.has('Authorization'));
     return next(req);
   }
 
@@ -38,6 +60,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (apiKey) {
     headers = headers.set('X-API-Key', apiKey);
   }
+  diagnosticar(headers.has('Authorization'));
 
   return next(
     req.clone({

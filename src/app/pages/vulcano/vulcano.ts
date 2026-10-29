@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, signal, ViewChild } from '@angular/core';
-import { MapActionsService } from '../../shared/components/map-context-menu/map-actions.service';
+import { GeographicPoint, MapActionsService, validGeographicPoint } from '../../shared/components/map-context-menu/map-actions.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
 import { MapaTresD } from './mapa-tres-d/mapa-tres-d';
@@ -8,10 +8,15 @@ import { MapaComponent } from '../../shared/components/mapa/mapa';
 import { HojaMilimetradaComponent } from './hoja-milimetrada/hoja-milimetrada.component';
 import { InformePdfPayload, RegistroCoordenada, SimulacionTrayectoriaResponse, VulcanoApiService } from '../../core/services/vulcano-api.service';
 import { RelacionFijada } from '../../shared/models/relacion-fijada.model';
+import { GeographicPointsService } from '../../shared/geographic-points/geographic-points';
+import { PointRemoteService } from '../../shared/geographic-points/point-remote.service';
+import { PuntoCapturaVisual } from '../../shared/models/punto-captura-visual.model';
 import { defer, finalize, firstValueFrom, Subscription, timeout } from 'rxjs';
 import { LoaderService } from '../../core/services/loader.service';
+import { FeaturePoligono, VentanaLimitesSeguridad } from './ventana-limites-seguridad/ventana-limites-seguridad';
 
 type VistaPrincipal = '2d' | '3d' | 'hoja-milimetrada';
+
 
 interface EstadoCamaraMapa {
   lat: number;
@@ -25,11 +30,14 @@ interface EstadoCamaraMapa {
 @Component({
   selector: 'app-vulcano',
   standalone: true,
-  imports: [Menu, MapaComponent, MapaTresD, HojaMilimetradaComponent],
+  imports: [Menu, MapaComponent, MapaTresD, HojaMilimetradaComponent, VentanaLimitesSeguridad],
   templateUrl: './vulcano.html',
   styleUrl: './vulcano.css',
 })
 export class Vulcano {
+  readonly puntosState = inject(GeographicPointsService);
+  /** Inicia la recuperacion tras login sin depender de abrir la ventana. */
+  readonly puntosRemote = inject(PointRemoteService);
   private readonly mapActions = inject(MapActionsService);
   private readonly changeDetector = inject(ChangeDetectorRef);
   readonly loader = inject(LoaderService);
@@ -41,6 +49,67 @@ export class Vulcano {
   @ViewChild(MapaTresD) private readonly mapa3dRef?: MapaTresD;
   @ViewChild(HojaMilimetradaComponent) private readonly hojaMilimetradaRef?: HojaMilimetradaComponent;
   private primeraEntrada3D = true;
+  poligonoLimitesActual: FeaturePoligono | null = null;
+  poligonosLimites: readonly FeaturePoligono[] = [];
+  private siguientePoligonoLimites = 1;
+  coordenadaMapaSeleccionada: GeographicPoint | null = null;
+  capturaCoordenadasActiva = false;
+  puntosCapturaVisual: readonly PuntoCapturaVisual[] = [];
+
+  limpiarCapturaVisual(): void {
+    if (!this.puntosCapturaVisual.length) return;
+    if (!window.confirm('¿Limpiar todos los marcadores de captura visual? Los demás elementos del mapa se conservarán.')) return;
+    this.puntosCapturaVisual = [];
+  }
+
+  /** Captura visual local; no registra puntos ni solicita acciones operativas. */
+  onMapClick(point: { lat: number; lng: number }): void {
+    if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+      const selected = L.latLng(point.lat, point.lng).wrap();
+      if (this.puntosState.capturar({ latitud: selected.lat, longitud: selected.lng })) return;
+    }
+    if (!this.capturaCoordenadasActiva) return;
+    if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return;
+    const longitud = Math.abs(point.lng) <= 180 ? point.lng : L.latLng(point.lat, point.lng).wrap().lng;
+    const coordenada = { latitud: point.lat, longitud };
+    if (validGeographicPoint(coordenada)) {
+      this.coordenadaMapaSeleccionada = coordenada;
+      this.puntosCapturaVisual = [...this.puntosCapturaVisual, {
+        ...coordenada, id: this.puntosCapturaVisual.length + 1,
+      }];
+      
+    }
+  }
+
+
+/**
+ * Recibe el polígono generado desde Límites de Seguridad
+ * y lo dibuja sobre el mapa Leaflet 2D.
+ *
+ * @param poligono GeoJSON validado.
+ */
+/**
+ * Distribuye el GeoJSON generado desde Límites de Seguridad
+ * hacia los visores cartográficos de VULCANO.
+ */
+/**
+ * Almacena el polígono GeoJSON en el estado compartido.
+ * Los tres visualizadores reciben los datos mediante @Input().
+ */
+mostrarPoligono(poligono: FeaturePoligono): void {
+  // Instantanea independiente del borrador: crear otro no modifica los anteriores.
+  const finalizado = structuredClone(poligono);
+  finalizado.id = `limite-${this.siguientePoligonoLimites++}`;
+  this.poligonosLimites = [...this.poligonosLimites, finalizado];
+  this.poligonoLimitesActual = finalizado;
+
+  console.log('[VULCANO] Polígono almacenado:', {
+    nombre: poligono.properties.nombre,
+    coordenadas: poligono.geometry.coordinates
+  });
+
+  this.changeDetector.markForCheck();
+}
 
   vistaActiva: VistaPrincipal = '2d';
   registrosCoordenadas: readonly RegistroCoordenada[] = [];
@@ -79,6 +148,7 @@ export class Vulcano {
     this.mapActions.requested$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(request => {
       if (request.action === 'graficar') this.menuRef?.openGraficarWindow(request.point);
       else if (request.action === 'limites-seguridad') this.menuRef?.openLimitesWindow();
+      else if (request.action === 'puntos') this.menuRef?.openPuntosWindow();
       else this.hojaMilimetradaRef?.abrirProyeccionDesdeMapa(request.point, request.host);
       this.changeDetector.markForCheck();
     });

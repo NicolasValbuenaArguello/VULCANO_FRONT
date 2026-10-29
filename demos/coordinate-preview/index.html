@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VULCANO · Demostración de captura visual</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;background:#071007;color:#dce7d0;font:14px system-ui,sans-serif;padding:24px}
+  main{max-width:960px;margin:auto}h1{font-size:18px}p{color:#a3ae93;line-height:1.6}
+  .panel{background:#0a1409;border:1px solid #35492b;border-radius:5px;padding:16px}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap}button{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:3px;background:#252d29;color:#c4ccc5;border:1px solid #56635a;font:700 12px system-ui;cursor:pointer}
+  button[aria-pressed=true]{background:#243c29;color:#d2e6d1;border-color:#72966a}button:focus-visible,.map:focus-visible{outline:2px solid #91b487;outline-offset:2px}
+  .map{position:relative;overflow:hidden;min-height:340px;height:50vh;background-color:#14261d;background-image:linear-gradient(#35503b55 1px,transparent 1px),linear-gradient(90deg,#35503b55 1px,transparent 1px);background-size:40px 40px;touch-action:manipulation;cursor:crosshair}
+  .map[aria-disabled=true]{cursor:default}.label{position:absolute;left:12px;top:12px;background:#071007e8;padding:8px;pointer-events:none}
+  .marker{position:absolute;width:14px;height:14px;border:2px solid white;border-radius:50%;background:#2879eb;transform:translate(-50%,-50%);pointer-events:none}.marker[hidden]{display:none}
+  output{display:block;margin-top:12px;font-variant-numeric:tabular-nums}
+</style>
+<main>
+  <h1>VULCANO · Demostración de captura visual</h1>
+  <p>Superficie esquemática independiente. No representa un mapa geográfico ni registra puntos o polígonos.</p>
+  <section class="panel">
+    <header><strong>＋ COORDENADAS</strong><button type="button" aria-label="Captura visual de coordenadas" aria-pressed="true" aria-describedby="status"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3l14 9-7 1-3 7z"/></svg><span>ACTIVADA</span></button></header>
+    <p id="status" role="status">VISTA PREVIA ACTIVA · Haga clic en la superficie.</p>
+    <div class="map" role="button" tabindex="0" aria-label="Superficie de demostración: haga clic o pulse Enter para señalar el centro" aria-disabled="false"><span class="label">CAPA DE DEMOSTRACIÓN</span><span class="marker" hidden></span></div>
+    <output aria-live="polite">Sin ubicación seleccionada.</output>
+  </section>
+</main>
+<script>
+  const toggle=document.querySelector('button'), surface=document.querySelector('.map'), marker=document.querySelector('.marker'), status=document.querySelector('#status'), output=document.querySelector('output');
+  let active=true;
+  toggle.addEventListener('click',()=>{
+    active=!active;
+    toggle.setAttribute('aria-pressed',String(active));toggle.querySelector('span').textContent=active?'ACTIVADA':'DESACTIVADA';
+    surface.setAttribute('aria-disabled',String(!active));
+    status.textContent=active?'VISTA PREVIA ACTIVA · Haga clic en la superficie.':'VISTA PREVIA DESACTIVADA · Ubicación conservada.';
+    marker.hidden=!active||!marker.style.left;
+  });
+  function select(x,y){if(!active)return;marker.style.left=x+'%';marker.style.top=y+'%';marker.hidden=false;output.textContent=`Ubicación de demostración: ${x.toFixed(1)}% horizontal · ${y.toFixed(1)}% vertical`;}
+  surface.addEventListener('click',event=>{const bounds=surface.getBoundingClientRect();select((event.clientX-bounds.left)/bounds.width*100,(event.clientY-bounds.top)/bounds.height*100);});
+  surface.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();select(50,50);}});
+</script>
+</html>

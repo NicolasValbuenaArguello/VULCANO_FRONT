@@ -25,9 +25,7 @@
   <div class="navbar-menu" [class.navbar-menu--open]="mobileMenuOpen">
     @for (item of menuItems; track item.name) {
       @if (canShowItem(item)) {
-        @if (item.action === 'logout') {
-          <button type="button" class="nav-item" (click)="logout()" [disabled]="authService.loggingOut()">{{ item.name }}</button>
-        } @else if (!hasVisibleChildren(item)) {
+        @if (!hasVisibleChildren(item)) {
           <a
             class="nav-item"
             [routerLink]="item.route"
@@ -149,9 +147,7 @@
   @for (item of menuItems; track item.name) {
     @if (canShowItem(item)) {
       <div class="mobile-item">
-        @if (item.action === 'logout') {
-          <button type="button" class="mobile-link" (click)="logout()" [disabled]="authService.loggingOut()">{{ item.name }}</button>
-        } @else if (!hasVisibleChildren(item)) {
+        @if (!hasVisibleChildren(item)) {
           <a
             class="mobile-link"
             [routerLink]="item.route"

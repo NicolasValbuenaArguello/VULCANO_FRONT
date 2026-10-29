@@ -14,11 +14,15 @@ import {
   inject,
 } from '@angular/core';
 import { Graficar } from '../graficar/graficar';
+import { VentanaPuntos } from '../ventana-puntos/ventana-puntos';
 import { VentanaSistemasArtilleria } from '../ventana-sistemas-artilleria/ventana-sistemas-artilleria';
 import { Iconos } from '../iconos/iconos';
 import { RegistroCoordenada } from '../../../core/services/vulcano-api.service';
 import { IconosService } from '../../../shared/services/iconos.service';
 import { GeographicPoint, validGeographicPoint } from '../../../shared/components/map-context-menu/map-actions.service';
+import type { FeaturePoligono } from
+  '../ventana-limites-seguridad/ventana-limites-seguridad';
+
 
 interface MenuOption {
   id: number;
@@ -33,11 +37,18 @@ type FloatingWindowKey = 'graficar' | 'iconos';
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [Graficar, Iconos, VentanaSistemasArtilleria, VentanaLimitesSeguridad],
+  imports: [Graficar, Iconos, VentanaSistemasArtilleria, VentanaLimitesSeguridad, VentanaPuntos],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css'],
 })
 export class Menu implements AfterViewInit, OnDestroy {
+
+  
+  @Input() coordenadaMapaSeleccionada: GeographicPoint | null = null;
+  @Input() capturaCoordenadasActiva = false;
+  @Input() cantidadCapturasVisuales = 0;
+  @Output() limpiarCapturaVisual = new EventEmitter<void>();
+  @Output() capturaCoordenadasActivaChange = new EventEmitter<boolean>();
   private readonly changeDetector = inject(ChangeDetectorRef);
   coordenadasGraficar: GeographicPoint | null = null;
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -67,17 +78,45 @@ export class Menu implements AfterViewInit, OnDestroy {
     }
   });
 
+  @Output()
+readonly poligonoCreado = new EventEmitter<FeaturePoligono>();
+
   @ViewChild('floatingWindow') private readonly floatingWindowRef?: ElementRef<HTMLElement>;
   @ViewChild('iconosWindow') private readonly iconosWindowRef?: ElementRef<HTMLElement>;
   @ViewChild(VentanaSistemasArtilleria) private sistemasWindow?: VentanaSistemasArtilleria;
 
   limitesWindowOpen = false;
+  puntosWindowOpen = false;
+  puntosWindowZIndex = 5400;
+  @ViewChild(VentanaPuntos) private puntosWindow?: VentanaPuntos;
+
+  /** Abre una sola instancia de PUNTOS o restaura la existente sin tocar otras ventanas. */
+  openPuntosWindow(): void {
+    this.syncFloatingWindowsHost();
+    this.puntosWindowOpen = true;
+    if (this.puntosWindow) {
+      this.puntosWindow.restore();
+      this.puntosWindow.focusWindow();
+    } else this.activatePuntosWindow();
+    this.changeDetector.markForCheck();
+  }
+
+  /** Comparte el orden de superposicion con todas las ventanas existentes. */
+  activatePuntosWindow(): void {
+    this.puntosWindowZIndex = Math.max(this.puntosWindowZIndex, this.limitesWindowZIndex,
+      this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+  }
+  limitesNuevaApertura = 0;
   limitesWindowZIndex = 5300;
   @ViewChild(VentanaLimitesSeguridad) private limitesWindow?: VentanaLimitesSeguridad;
 
   /** Ambos menus reutilizan esta unica instancia y restauran su estado si esta minimizada. */
   openLimitesWindow(): void {
     this.syncFloatingWindowsHost();
+    if (!this.limitesWindowOpen) {
+      this.limitesNuevaApertura++;
+      this.capturaCoordenadasActivaChange.emit(false);
+    }
     this.limitesWindowOpen = true;
     if (this.limitesWindow) {
       this.limitesWindow.restore();
@@ -86,9 +125,14 @@ export class Menu implements AfterViewInit, OnDestroy {
     this.changeDetector.markForCheck();
   }
 
+  closeLimitesWindow(): void {
+    this.limitesWindowOpen = false;
+    this.capturaCoordenadasActivaChange.emit(false);
+  }
+
   /** Comparte el orden visual del menu con Sistemas, Graficar e Iconos. */
   activateLimitesWindow(): void {
-    this.limitesWindowZIndex = Math.max(this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+    this.limitesWindowZIndex = Math.max(this.puntosWindowZIndex, this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
   }
 
   sistemasWindowOpen = false;
@@ -105,7 +149,7 @@ export class Menu implements AfterViewInit, OnDestroy {
 
   /** Eleva Sistemas sobre las ventanas del menu. */
   activateSistemasWindow(): void {
-    this.sistemasWindowZIndex = Math.max(this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+    this.sistemasWindowZIndex = Math.max(this.puntosWindowZIndex, this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
   }
 
   /** Reutiliza la gestion de primer plano del menu para Graficar e Iconos. */
@@ -706,7 +750,7 @@ export class Menu implements AfterViewInit, OnDestroy {
   }
 
   private bringWindowToFront(windowKey: FloatingWindowKey): void {
-    const z = Math.max(this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
+    const z = Math.max(this.puntosWindowZIndex, this.limitesWindowZIndex, this.sistemasWindowZIndex, this.graficarWindowZIndex, this.iconosWindowZIndex) + 1;
     if (windowKey === 'graficar') this.graficarWindowZIndex = z;
     else this.iconosWindowZIndex = z;
   }
@@ -728,4 +772,5 @@ export class Menu implements AfterViewInit, OnDestroy {
     this.iconoSubscription.unsubscribe();
     this.stopPointerInteractions();
   }
+  
 }

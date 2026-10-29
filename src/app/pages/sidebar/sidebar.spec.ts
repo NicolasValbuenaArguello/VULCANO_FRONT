@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { vi } from 'vitest';
+import { loginFixture } from '../../core/auth/auth-test.fixture';
 
 describe('Sidebar', () => {
   let component: Sidebar;
@@ -25,10 +26,17 @@ describe('Sidebar', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders Salir as an action on desktop and mobile, never as a login link', () => {
+  it('keeps Home first and preserves only the user-area logout on desktop and mobile', () => {
     const logout = vi.spyOn(component.authService, 'logout').mockResolvedValue();
+    component.authService.currentUser.set(loginFixture().usuario);
+    fixture.detectChanges();
     const host: HTMLElement = fixture.nativeElement;
-    const actions = [...host.querySelectorAll<HTMLButtonElement>('button')].filter(button => button.textContent?.trim() === 'Salir');
+    expect(host.querySelector('.navbar-menu > a')?.textContent?.trim()).toBe('Home');
+    expect(host.querySelector('.navbar-menu > a')?.getAttribute('href')).toBe('/home');
+    expect(host.querySelectorAll('.navbar-menu > button')).toHaveLength(0);
+    expect(host.querySelector('.navbar-mobile-panel .mobile-item .mobile-link')?.textContent?.trim()).toBe('Home');
+    expect(component.menuItems.map(item => item.name)).toEqual(['Home', 'Usuario', 'Vulcano']);
+    const actions = [...host.querySelectorAll<HTMLButtonElement>('.navbar-user__logout')];
     expect(actions).toHaveLength(2);
     expect([...host.querySelectorAll('a')].some(link => link.textContent?.trim() === 'Salir')).toBe(false);
     for (const action of actions) action.click();

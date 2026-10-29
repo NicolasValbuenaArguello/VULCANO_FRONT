@@ -5,6 +5,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MapaTresD } from './mapa-tres-d';
 import { vi } from 'vitest';
 import { environment } from '../../../../environments/environment';
+import { Marker } from 'maplibre-gl';
+import { GeographicPointsService, DEFAULT_POINT_STYLE } from '../../../shared/geographic-points/geographic-points';
 
 describe('MapaTresD', () => {
   let component: MapaTresD;
@@ -23,6 +25,59 @@ describe('MapaTresD', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('recovers points received before initialization from the existing style.load event with tiles pending', () => {
+    const instance = component as any;
+    const state = new GeographicPointsService();
+    state.guardar({ nombre: 'Antes de 3D', observaciones: '', latitud: 4, longitud: -73, ...DEFAULT_POINT_STYLE });
+    state.graficar(); instance.puntosGeograficos = state.geometria();
+    instance.ngOnChanges({ puntosGeograficos: {} }); // No hay mapa todavia: el input permanece disponible.
+    const canvas = document.createElement('div'), sources = new Map(), layers = new Map(), handlers = new Map();
+    const add = vi.spyOn(Marker.prototype, 'addTo').mockImplementation(function (this: Marker) { canvas.appendChild(this.getElement()); return this; });
+    const map = { isStyleLoaded: () => false, getStyle: () => ({ sources: {}, layers: [] }), getCanvasContainer: () => canvas,
+      getSource: (id: string) => sources.get(id), addSource: (id: string, source: any) => sources.set(id, { ...source, setData(data: unknown) { this.data = data; } }),
+      getLayer: (id: string) => layers.get(id), addLayer: (layer: any) => layers.set(layer.id, layer),
+      on: (event: string, handler: Function) => handlers.set(event, handler) };
+    instance.map = map; instance.terrainDiagnosticMode = true;
+    const perf = vi.spyOn(instance, 'logMapPerformance').mockImplementation(() => {});
+    const log = vi.spyOn(instance, 'logStyleState').mockImplementation(() => {});
+    try {
+      instance.bindMapEvents(); handlers.get('style.load')();
+      expect(canvas.children).toHaveLength(1); expect(sources.get('puntos-generales').data.features).toHaveLength(2);
+      handlers.get('styledataloading')(); sources.clear(); layers.clear(); handlers.get('style.load')();
+      expect(canvas.children).toHaveLength(1); expect(layers.size).toBe(2); expect(add).toHaveBeenCalledOnce();
+    } finally { instance.puntosLayer.dispose(); instance.map = null; add.mockRestore(); perf.mockRestore(); log.mockRestore(); }
+  });
+
+  it('retains both finalized polygons and their styles after repeated rendering and style replacement', () => {
+    const instance = component as any;
+    const polygon = (id: string, color: string) => ({ type: 'Feature', id,
+      properties: { nombre: id, descripcion: '', estilo: {
+        colorRelleno: color, colorLinea: '#ffffff', opacidadRelleno: .65, opacidadLinea: 1, grosorLinea: 2.5,
+      } }, geometry: { type: 'Polygon', coordinates: [[[-74, 4], [-73, 4], [-73, 5], [-74, 4]]] },
+    });
+    const sources = new Map<string, any>(), layers = new Map<string, any>();
+    const map = {
+      isStyleLoaded: () => true, getSource: (id: string) => sources.get(id),
+      addSource: vi.fn((id, source) => sources.set(id, { data: source.data, setData(data: unknown) { this.data = data; } })),
+      getLayer: (id: string) => layers.get(id), addLayer: vi.fn(layer => layers.set(layer.id, layer)),
+      fitBounds: vi.fn(), triggerRepaint: vi.fn(),
+    };
+    instance.map = map;
+    try {
+      instance.poligonosLimites = [polygon('A', '#123456'), polygon('B', '#abcdef')];
+      instance.sincronizarLimitesSeguridad(); instance.sincronizarLimitesSeguridad();
+      expect(map.addSource).toHaveBeenCalledOnce();
+      expect(map.addLayer).toHaveBeenCalledTimes(2);
+      const data = sources.get('limites-seguridad-source').data;
+      expect(data.features.map((p: any) => p.id)).toEqual(['A', 'B']);
+      expect(data.features.map((p: any) => p.properties.colorRelleno)).toEqual(['#123456', '#abcdef']);
+      sources.clear(); layers.clear(); // MapLibre sustituye el estilo.
+      instance.sincronizarLimitesSeguridad();
+      expect(sources.get('limites-seguridad-source').data.features).toHaveLength(2);
+      expect(layers.size).toBe(2);
+    } finally { instance.map = null; }
   });
 
   it('does not request an OSM probe while its provider is disabled', async () => {

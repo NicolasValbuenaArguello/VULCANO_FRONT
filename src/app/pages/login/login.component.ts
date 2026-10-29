@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -40,6 +40,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   protected showLogin = false;
@@ -115,7 +116,7 @@ export class LoginComponent {
     this.showPassword = !this.showPassword;
   }
 
-  /** Valida controles, bloquea envios duplicados y navega a Home solo tras bootstrap valido.
+  /** Valida controles, bloquea envios duplicados y retoma la URL interna solo tras bootstrap valido.
    * La suscripcion termina al destruir el componente; finalize libera el estado de envio. */
   protected login(): void {
     if (this.isSubmitting()) {
@@ -143,7 +144,7 @@ export class LoginComponent {
       )
       .subscribe({
         next: () => {
-          void this.router.navigateByUrl(APP_PATHS.HOME);
+          void this.router.navigateByUrl(this.destinoTrasLogin());
         },
         error: (error: unknown) => {
           // Mensajes controlados: no mostrar detalles internos ni contenido arbitrario del servidor.
@@ -156,6 +157,23 @@ export class LoginComponent {
           this.loginError.set(message);
         },
       });
+  }
+
+  /** Recupera returnUrl mediante ActivatedRoute sin aceptar destinos externos ni ciclos al login.
+   * @returns Ruta interna con consulta/fragmento, o Home si falta o es insegura.
+   * No modifica permisos: la navegacion de Router sigue pasando por los guards existentes.
+   * Rechaza escapes codificados de barras para evitar interpretaciones ambiguas del destino. */
+  private destinoTrasLogin(): string {
+    const destino = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (!destino || !destino.startsWith('/') || destino.startsWith('//') ||
+      /[\\\u0000-\u0020]|%(?:2f|5c|0[0-9a-f]|1[0-9a-f]|20)/i.test(destino)) return APP_PATHS.HOME;
+    try {
+      const url = this.router.parseUrl(destino);
+      const segmentos = url.root.children['primary']?.segments ?? [];
+      if (segmentos[0]?.path === APP_PATHS.LOGIN.slice(1) || Object.keys(url.root.children).some(k => k !== 'primary'))
+        return APP_PATHS.HOME;
+      return destino;
+    } catch { return APP_PATHS.HOME; }
   }
 
   protected get usuarioInvalid(): boolean {

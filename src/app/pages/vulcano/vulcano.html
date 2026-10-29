@@ -1,7 +1,13 @@
 <app-menu #menu
+  [coordenadaMapaSeleccionada]="coordenadaMapaSeleccionada"
+  [capturaCoordenadasActiva]="capturaCoordenadasActiva"
+  [cantidadCapturasVisuales]="puntosCapturaVisual.length"
+  (limpiarCapturaVisual)="limpiarCapturaVisual()"
+  (capturaCoordenadasActivaChange)="capturaCoordenadasActiva = $event"
   [vistaActiva]="vistaActiva"
   (vistaChange)="onVistaChange($event)"
-  (coordenadaRegistrada)="onCoordenadaRegistrada($event)">
+  (coordenadaRegistrada)="onCoordenadaRegistrada($event)"
+  (poligonoCreado)="mostrarPoligono($event)">
 </app-menu>
 
 @if (loader.loading() && !generandoInforme) {
@@ -23,12 +29,14 @@
 
 <div class="vulcano-view-container">
   <div class="vulcano-view vulcano-view--2d" [class.vulcano-view--hidden]="vistaActiva !== '2d'">
-    <app-mapa [center]="centroMapa2D" [zoom]="zoomMapa2D" [registrosCoordenadas]="registrosCoordenadas" [relacionFijada]="relacionFijada" [simulacionTrayectoria]="simulacionTrayectoria"></app-mapa>
+    <app-mapa [puntosGeograficos]="puntosState.geometria()" [puntosCapturaVisual]="puntosCapturaVisual" (mapClick)="onMapClick($event)" [center]="centroMapa2D" [zoom]="zoomMapa2D" [registrosCoordenadas]="registrosCoordenadas" [relacionFijada]="relacionFijada" [simulacionTrayectoria]="simulacionTrayectoria" [poligonosLimites]="poligonosLimites"></app-mapa>
   </div>
 
   <div class="vulcano-view vulcano-view--3d" [class.vulcano-view--hidden]="vistaActiva !== '3d'">
     @defer (when vistaActiva === '3d') {
-    <app-mapa-tres-d
+    <app-mapa-tres-d [puntosGeograficos]="puntosState.geometria()"
+      [puntosCapturaVisual]="puntosCapturaVisual"
+      (mapClick)="onMapClick($event)"
       [center]="centroMapa3D"
       [zoom]="zoomMapa3D"
       [bearing]="bearingMapa3D"
@@ -36,12 +44,13 @@
       [registrosCoordenadas]="registrosCoordenadas"
       [relacionFijada]="relacionFijada"
       [simulacionTrayectoria]="simulacionTrayectoria"
+      [poligonosLimites]="poligonosLimites"
     ></app-mapa-tres-d>
     }
   </div>
 
   <div class="vulcano-view" [class.vulcano-view--hidden]="vistaActiva !== 'hoja-milimetrada'">
-    <app-hoja-milimetrada [registrosCoordenadas]="registrosCoordenadas" [relacionFijadaEntrada]="relacionFijada" [simulacionTrayectoria]="simulacionTrayectoria" [calculandoTrayectoria]="calculandoTrayectoria" (relacionFijada)="onRelacionFijada($event)" (coordenadaRegistrada)="onCoordenadaRegistrada($event)" (abrirCatalogoIconos)="abrirCatalogoIconos()" (abrirGraficar)="abrirVentanaGraficar()" (abrirLimitesSeguridad)="menu.openLimitesWindow()" [generandoInforme]="generandoInforme" (informeSolicitado)="generarInformePdf()">
+    <app-hoja-milimetrada [poligonoLimites]="poligonoLimitesActual" [registrosCoordenadas]="registrosCoordenadas" [relacionFijadaEntrada]="relacionFijada" [simulacionTrayectoria]="simulacionTrayectoria" [calculandoTrayectoria]="calculandoTrayectoria" (relacionFijada)="onRelacionFijada($event)" (coordenadaRegistrada)="onCoordenadaRegistrada($event)" (abrirCatalogoIconos)="abrirCatalogoIconos()" (abrirGraficar)="abrirVentanaGraficar()" (abrirLimitesSeguridad)="menu.openLimitesWindow()" (abrirPuntos)="menu.openPuntosWindow()" [generandoInforme]="generandoInforme" (informeSolicitado)="generarInformePdf()">
 <ng-container indicadorInforme>
 @if (generandoInforme) {
   <div indicadorInforme class="simulacion-loader-overlay" role="status" aria-live="polite" aria-busy="true"><div class="simulacion-loader-panel"><div class="simulacion-loader-spinner"></div><div class="simulacion-loader-title">GENERANDO INFORME</div><div class="simulacion-loader-message">{{ detalleInforme }}</div><div class="simulacion-loader-wait">ESPERE...</div></div></div>
@@ -50,3 +59,4 @@
     </app-hoja-milimetrada>
   </div>
 </div>
+

@@ -25,7 +25,7 @@ describe('Map context menu', () => {
     map.fire('contextmenu', { latlng: L.latLng(-3.456789123, 75.123456789), originalEvent: event });
     expect(event.defaultPrevented).toBe(true);
     expect(service.selectedPoint()).toEqual({ latitud: -3.456789123, longitud: 75.123456789 });
-    expect(host.querySelectorAll('[role="menuitem"]')).toHaveLength(3);
+    expect(host.querySelectorAll('[role="menuitem"]')).toHaveLength(4);
     expect(actions).toHaveLength(0);
     host.querySelector<HTMLButtonElement>('button')!.click();
     expect(actions).toEqual([{ action: 'graficar', point: { latitud: -3.456789123, longitud: 75.123456789 }, host }]);

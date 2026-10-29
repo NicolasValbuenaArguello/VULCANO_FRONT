@@ -1,216 +1,31 @@
-> Actualizacion del contrato POST /token (27/10/2026): ver [informe vigente](../../../../docs/login-contrato-fastapi.md). Las referencias historicas siguientes a token_type/expires_in, api_key y restauracion desde localStorage han sido sustituidas por el contrato nuevo y sesion solo en memoria.
+﻿# Autenticación del frontend
 
-# Auth Architecture
+Contrato vigente: [login FastAPI](../../../../docs/login-contrato-fastapi.md).
+Diagnóstico actual: [persistencia de sesión](../../../../docs/persistencia-sesion-diagnostico.md).
+Auditoría del registro GIS: [diagnóstico JWT y pruebas HTTP](../../../../docs/diagnostico-jwt-gis.md).
 
-Este directorio concentra la arquitectura base de autenticacion del frontend Angular.
+AuthService centraliza usuario, access token, refresh token, expiración y catálogos.
+Los tokens permanecen exclusivamente en memoria; **recargar o abrir otra pestaña requiere login**.
+No se restaura desde localStorage ni sessionStorage. No se almacenan contraseñas.
 
-Objetivos:
-- mantener un login temporal solo para desarrollo;
-- proteger rutas con guards;
-- centralizar token, usuario y api key;
-- preparar la integracion futura con FastAPI sin cambiar componentes;
-- evitar URLs y credenciales repartidas por el proyecto.
+El backend local documenta POST /token; no publica un contrato de refresh/logout
+ni recuperación con cookie HttpOnly. Las URLs configuradas no se invocan sin ese contrato.
+El cierre actual es local, no revoca JWT en el servidor ni elimina cookies HttpOnly.
 
-## Estructura
+AuthGuard exige token vigente y conserva la URL solicitada en returnUrl.
+GuestGuard redirige a Home si ya existe sesión válida.
+Tras login validado se retoma una URL interna segura, o Home como respaldo;
+los guards siguen aplicándose. Usuario.permisos determina asignaciones;
+el catálogo de permisos no concede acceso.
 
-- `auth.service.ts`: unica fuente de verdad para login, logout, usuario actual, token y api key.
-- `auth.guard.ts`: protege rutas autenticadas.
-- `guest.guard.ts`: protege rutas publicas como `/login`.
-- `auth.interceptor.ts`: agrega `Authorization: Bearer ...` y `X-API-Key` cuando aplique.
-- `error.interceptor.ts`: centraliza manejo de errores HTTP.
-- `auth.models.ts`: modelos de usuario, request y response.
-- `auth-http-context.ts`: banderas para evitar ciclos entre login, interceptores y errores.
-- `api-config.service.ts`: construye URLs desde `environment`.
-- `navigation.service.ts`: registra cambios de ruta del frontend.
+AuthInterceptor envía Bearer exclusivamente a backends configurados y descarta
+respuestas exitosas de generaciones anteriores. ErrorInterceptor cierra la sesión
+local ante 401 protegido de la generación actual; 403 y fallos temporales de red
+no implican logout. No hay renovación ni reintentos automáticos implementados.
 
-## Login temporal
+Logout limpia memoria, catálogos, claves propias antiguas de ambos storages y
+caches privadas registradas. Cancela login pendiente y evita cierres concurrentes.
+Detalles: [cierre de sesión](../../../../docs/cierre-sesion.md).
 
-El login mock esta centralizado en `AuthService`.
-
-Credenciales provisionales:
-- usuario: `admin`
-- contrasena: `admin123`
-
-Regla de seguridad:
-- el mock solo funciona si `environment.useMockAuth === true` y `environment.production === false`.
-- en produccion el mock queda bloqueado aunque alguien cambie una variable por error.
-
-No guardar nunca la contrasena en storage.
-
-## Environment
-
-La configuracion vive en:
-- `src/environments/environment.ts`
-- `src/environments/environment.production.ts`
-
-Campos principales:
-- `production`
-- `useMockAuth`
-- `apiBaseUrl`
-- `api`
-- `endpoints`
-
-### Cambio futuro a FastAPI
-
-Cuando el backend exista, solo debes cambiar:
-- `useMockAuth: false`
-- `apiBaseUrl` o `api.auth`
-- endpoints si cambian
-
-Los componentes no deberian modificarse.
-
-## AuthService
-
-Responsabilidades:
-- iniciar sesion;
-- cerrar sesion;
-- reconstruir sesion al recargar;
-- consultar token;
-- consultar usuario actual;
-- consultar rol;
-- consultar api key;
-- limpiar storage de forma selectiva;
-- preparar el paso de mock a backend.
-
-Metodo principal:
-```ts
-login(usuario: string, password: string)
-```
-
-Salida del backend esperada:
-```ts
-{
-  access_token: "...",
-  token_type: "bearer",
-  api_key?: "...",
-  usuario: {
-    id: 1,
-    usuario: "admin",
-    rol: "ADMIN"
-  }
-}
-```
-
-## Guards
-
-### AuthGuard
-
-Protege rutas que requieren sesion.
-
-Si no hay sesion:
-- redirige a `/login`.
-
-### GuestGuard
-
-Protege rutas publicas.
-
-Si el usuario ya esta autenticado:
-- redirige a `/home`.
-
-## Interceptors
-
-### AuthInterceptor
-
-Agrega headers solo para requests al backend.
-
-Headers preparados:
-- `Authorization: Bearer <token>`
-- `X-API-Key: <api_key>` si existe
-
-No intercepta:
-- assets
-- imagenes locales
-- OBJ
-- GLB
-- texturas
-- URLs externas que no pertenecen al backend
-
-### ErrorInterceptor
-
-Manejo central:
-- `401`: limpia sesion y redirige a `/login`
-- `403`: deja listo el manejo de acceso denegado
-- `500`: registra el error sin borrar la sesion
-
-La peticion de login usa `HttpContext` para evitar ciclos de logout o redireccion incorrecta.
-
-## Rutas
-
-Rutas centrales:
-- `APP_ROUTES.LOGIN`
-- `APP_ROUTES.HOME`
-
-Paths:
-- `APP_PATHS.LOGIN`
-- `APP_PATHS.HOME`
-
-Agregar una ruta protegida nueva es simple:
-```ts
-{
-  path: 'usuarios',
-  canActivate: [authGuard],
-  loadComponent: () => import('./pages/usuarios/usuarios.component').then(m => m.UsuariosComponent)
-}
-```
-
-## Logout
-
-`AuthService.logout()`:
-- elimina `access_token`
-- elimina `usuario`
-- elimina `api_key`
-- limpia el estado reactivo
-- elimina las claves propias de autenticacion de `localStorage` y `sessionStorage`
-- cancela el login pendiente y descarta respuestas exitosas de generaciones anteriores
-- ejecuta las limpiezas privadas registradas por AppShell sin cambiar servicios operacionales
-- elimina cookies visibles con los nombres propios conocidos cuando su path lo permite
-- redirige a `/login` con `replaceUrl: true`; devuelve una Promise y evita cierres simultaneos
-
-No usa `localStorage.clear()`.
-
-El backend actual no publica logout ni refresh (ver `CONFIGURACION_VULCANO.md`):
-el cierre local no revoca un JWT emitido ni elimina cookies HttpOnly.
-Detalles, pruebas y limites: [docs/cierre-sesion.md](../../../../docs/cierre-sesion.md).
-
-## Sesion al recargar
-
-La sesion se reconstruye desde `localStorage` al iniciar el servicio.
-
-Eso permite:
-- login
-- F5
-- seguir autenticado
-
-## NavigationService
-
-Registra internamente:
-- ruta anterior
-- ruta actual
-- fecha y hora
-- usuario opcional
-
-Es solo auditoria frontend y no reemplaza la auditoria del backend.
-
-## App setup
-
-`app.config.ts` registra:
-- `provideRouter(routes)`
-- `provideHttpClient(withInterceptors([authInterceptor, errorInterceptor]))`
-
-`app.ts` instancia `NavigationService` para arrancar el registro de rutas.
-
-## Uso del login
-
-El login visual no debe cambiar de forma para esta arquitectura.
-
-Solo la logica debe llamar a `AuthService.login(...)` y navegar a `/home` al resolver correctamente.
-
-## Checklist rapido
-
-- `admin / admin123` funciona solo en desarrollo.
-- `/home` exige sesion.
-- `/login` redirige a `/home` si ya hay sesion.
-- `logout()` borra solo la sesion.
-- `F5` conserva la sesion.
-- los headers del backend salen del interceptor.
-- no hay URLs hardcodeadas en los componentes.
+El mock existente solo se permite con useMockAuth y fuera de producción.
+No representa una sesión recuperable ni sustituye los controles del servidor.

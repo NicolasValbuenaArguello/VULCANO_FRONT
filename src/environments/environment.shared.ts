@@ -1,8 +1,11 @@
 // shared-environment.ts
 
 export const sharedEnvironment = {
+  puntosGeograficosUrl: '/api/coordenadas/puntos',
   useMockAuth: false,
   timeout: 30000,
+  // Servicio GIS independiente, publicado por su propio FastAPI.
+  gisPoligonosUrl: '/api/coordenadas/limites-seguridad',
 
   // ============================================================
   // APIs

@@ -1,0 +1,77 @@
+{
+  "alcance": "Pagina HTML de prueba con estructura del componente, 20 filas sinteticas y estilos reales de menu, sistemas y limites; no sesion autenticada ni prueba visual end-to-end Angular.",
+  "resultados": [
+    {
+      "size": [
+        850,
+        550
+      ],
+      "columns": "389.75px 422.25px",
+      "footerInside": true,
+      "centralBeforeFooter": true,
+      "viewerInsidePanel": true,
+      "buttonsVisible": true,
+      "horizontal": []
+    },
+    {
+      "size": [
+        1100,
+        700
+      ],
+      "columns": "509.75px 552.25px",
+      "footerInside": true,
+      "centralBeforeFooter": true,
+      "viewerInsidePanel": true,
+      "buttonsVisible": true,
+      "horizontal": []
+    },
+    {
+      "size": [
+        1920,
+        1080
+      ],
+      "columns": "903.359px 978.641px",
+      "footerInside": true,
+      "centralBeforeFooter": true,
+      "viewerInsidePanel": true,
+      "buttonsVisible": true,
+      "horizontal": []
+    },
+    {
+      "size": [
+        420,
+        550
+      ],
+      "columns": "377px",
+      "footerInside": true,
+      "centralBeforeFooter": true,
+      "viewerInsidePanel": true,
+      "buttonsVisible": true,
+      "horizontal": []
+    },
+    {
+      "size": [
+        420,
+        300
+      ],
+      "columns": "377px",
+      "footerInside": true,
+      "centralBeforeFooter": true,
+      "viewerInsidePanel": true,
+      "buttonsVisible": true,
+      "horizontal": []
+    },
+    {
+      "size": [
+        680,
+        550
+      ],
+      "columns": "637px",
+      "footerInside": true,
+      "centralBeforeFooter": true,
+      "viewerInsidePanel": true,
+      "buttonsVisible": true,
+      "horizontal": []
+    }
+  ]
+}

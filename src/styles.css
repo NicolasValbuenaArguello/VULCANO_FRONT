@@ -55,3 +55,15 @@ input {
 a {
   color: inherit;
 }
+
+/* Etiquetas exclusivas del historial de captura visual de Leaflet. */
+.leaflet-tooltip.coordinate-preview-label {
+  background: #14261d;
+  border: 1px solid #72966a;
+  color: #dce7d0;
+  box-shadow: none;
+  padding: 2px 5px;
+  font: 600 11px system-ui, sans-serif;
+  pointer-events: none;
+}
+.leaflet-tooltip-top.coordinate-preview-label::before { border-top-color: #72966a; }

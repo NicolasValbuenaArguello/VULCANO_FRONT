@@ -44,3 +44,6 @@ __screenshots__/
 Thumbs.db
 
 public/assets/logo.3d/43964ae91bb2acbb84d662aa14da462a.obj
+# Datos independientes GIS (no versionar datos de usuarios)
+/demos/gis-polygons/backend/data/
+/demos/gis-polygons/backend/__pycache__/

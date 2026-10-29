@@ -3,7 +3,9 @@ import { WindowWorkspaceComponent } from '../../../shared/components/window-work
 import { WindowManagerService } from '../../../shared/components/window-workspace/window-manager.service';
 import { GeographicPoint, validGeographicPoint } from '../../../shared/components/map-context-menu/map-actions.service';
 import { MapActionPortalDirective } from '../../../shared/components/map-context-menu/map-action-portal.directive';
-import { AfterViewInit, Component, computed, effect, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, inject, signal, ViewChild, DestroyRef } from '@angular/core';
+import { AfterViewInit, Component, computed, effect, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, inject, signal, ViewChild, DestroyRef, untracked } from '@angular/core';
+import { GeographicPointsService } from '../../../shared/geographic-points/geographic-points';
+import { environment } from '../../../../environments/environment';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ElementoLocalDemo } from '../../../shared/models/elemento-local-demo.model';
@@ -22,6 +24,7 @@ import {
   concatMap,
   finalize
 } from 'rxjs';
+import { FeaturePoligono } from '../ventana-limites-seguridad/ventana-limites-seguridad';
 
 interface LocalPoint { x: number; y: number; }
 type DemoElement = ElementoLocalDemo & { readonly tipoGraficacion?: string };
@@ -56,6 +59,138 @@ type ArrastreManualPieza = 'direccion' | 'elevacion';
   styleUrls: ['./hoja-milimetrada.component.css', './proyectar.css'],
 })
 export class HojaMilimetradaComponent implements AfterViewInit, OnDestroy {
+  private readonly puntosState = inject(GeographicPointsService);
+  private readonly puntosHojaInicializada = signal(false);
+  private puntosVisiblesIds = '';
+
+  /** Proyecta la misma geometria confirmada de los mapas; no copia ni modifica registros. */
+  readonly puntosGeneralesLocales = computed(() => {
+    const result: { id: string; nombre: string; center: LocalPoint; ring: LocalPoint[]; properties: GeoJSON.GeoJsonProperties }[] = [];
+    const features = this.puntosState.geometria().features;
+    for (const f of features) {
+      if (f.geometry.type !== 'Point' || f.id === 'puntos-preview') continue;
+      const [lon, lat] = f.geometry.coordinates;
+      const center = this.proyectarPuntoGeneral(lon, lat);
+      if (!center) continue;
+      const circle = features.find(item => item.id === `${f.id}-circle`);
+      const ring = circle?.geometry.type === 'Polygon' ? circle.geometry.coordinates[0].map(([x, y]) => this.proyectarPuntoGeneral(x, y)) : [];
+      result.push({ id: String(f.id), nombre: String(f.properties?.['nombre'] ?? f.id), center,
+        ring: ring.every((p): p is LocalPoint => p !== null) ? ring : [], properties: f.properties });
+    }
+    return result;
+  });
+
+  /** Aplica el zoom/desplazamiento existentes a centros y anillos, manteniendo el marcador en pixeles. */
+  readonly puntosGeneralesPantalla = computed(() => this.puntosGeneralesLocales().map(p => ({ ...p,
+    screen: this.toScreen(p.center), points: p.ring.map(v => { const s = this.toScreen(v); return `${s.x},${s.y}`; }).join(' '),
+  })));
+
+  /** Solo acepta WGS84 finito y resultados validos del transformador existente. */
+  private proyectarPuntoGeneral(lon: number, lat: number): LocalPoint | null {
+    if (!validGeographicPoint({ latitud: lat, longitud: lon })) return null;
+    const p = this.convertirWgs84AOrigenNacional(lon, lat);
+    return p && Number.isFinite(p.x) && Number.isFinite(p.y) ? p : null;
+  }
+
+  /** Encuadra puntos confirmados para que no queden fuera de la cuadricula inicial; no cambia registros. */
+  centrarPuntosGenerales(): void {
+    const points = this.puntosGeneralesLocales().flatMap(p => [p.center, ...p.ring]);
+    if (!points.length) return;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of points) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
+    this.center.set({ x: (minX + maxX) / 2, y: (minY + maxY) / 2 });
+    const viewport = this.viewport(), base = Math.min(viewport.width / 420, viewport.height / 260);
+    const desired = Math.min(viewport.width * .75 / Math.max(maxX - minX, 1), viewport.height * .75 / Math.max(maxY - minY, 1));
+    this.zoom.set(Math.max(this.minZoom, Math.min(this.maxZoom, desired / base)));
+  }
+
+  /** Encuadra al incorporar IDs nuevos; editar estilo, cerrar la ventana o navegar no reinicia la camara. */
+  private readonly observarPuntosGenerales = effect(() => {
+    const points = this.puntosGeneralesLocales();
+    const initialized = this.puntosHojaInicializada();
+    const key = points.map(p => p.id).join('|');
+    if (initialized && key !== this.puntosVisiblesIds) {
+      const previous = new Set(this.puntosVisiblesIds.split('|'));
+      this.puntosVisiblesIds = key;
+      if (points.some(p => !previous.has(p.id))) untracked(() => this.centrarPuntosGenerales());
+    }
+    if (!environment.production) untracked(() => console.debug('[PUNTOS][HOJA]', {
+      cantidadRecibida: this.puntosState.geometria().features.filter(f => f.geometry.type === 'Point' && f.id !== 'puntos-preview').length,
+      cantidadTransformada: points.length, hojaInicializada: initialized,
+      escalaDisponible: Number.isFinite(this.scale()) && this.scale() > 0,
+    }));
+  });
+
+readonly poligonoLimitesActual =
+  signal<FeaturePoligono | null>(null);
+  
+  /**
+ * Polígono de límites de seguridad recibido desde VULCANO.
+ * Las coordenadas originales están en WGS84.
+ */
+@Input()
+set poligonoLimites(value: FeaturePoligono | null) {
+
+  const anterior = this.poligonoLimitesActual();
+
+  // Evita repetir el centrado cuando recibe el mismo objeto.
+  if (anterior === value) {
+    return;
+  }
+
+  this.poligonoLimitesActual.set(value);
+
+  if (value) {
+    this.centrarEnPoligonoLimites();
+  }
+}
+/**
+ * Vértices transformados al sistema de coordenadas
+ * planas utilizado por la Hoja Milimetrada.
+ */
+/**
+ * Convierte los vértices del polígono GeoJSON
+ * desde WGS84 hacia EPSG:9377 y posteriormente
+ * a coordenadas SVG de la Hoja Milimetrada.
+ *
+ * Descarta coordenadas cuya transformación falle.
+ */
+readonly verticesLimitesSeguridad = computed<LocalPoint[]>(() => {
+  const poligono = this.poligonoLimitesActual();
+
+  if (!poligono) return [];
+
+  const anillo = poligono.geometry.coordinates[0] ?? [];
+
+  const vertices = anillo.map(([longitud, latitud]) =>
+    this.convertirWgs84AOrigenNacional(longitud, latitud)
+  );
+
+  // No dibujar límites incompletos o con coordenadas inválidas.
+  if (
+    vertices.length < 4 ||
+    vertices.some(
+      punto =>
+        punto === null ||
+        !Number.isFinite(punto.x) ||
+        !Number.isFinite(punto.y)
+    )
+  ) {
+    console.warn('[HOJA] Polígono con coordenadas inválidas');
+    return [];
+  }
+
+  return (vertices as LocalPoint[]).map(punto =>
+    this.toScreen(punto)
+  );
+});
+readonly puntosSvgLimites = computed(() => {
+  return this.verticesLimitesSeguridad()
+    .map(punto => `${punto.x},${punto.y}`)
+    .join(' ');
+});
+
+
   private readonly iconosService = inject(IconosService);
   private readonly destroyRef = inject(DestroyRef);
   readonly iconosDisponibles = this.iconosService.catalogoIconos;
@@ -101,6 +236,14 @@ private hojaCompleta!: ElementRef<HTMLElement>;
   @Output() abrirGraficar = new EventEmitter<void>();
   /** Solicita la unica ventana compartida sin modificar la pieza ni sus coordenadas. */
   @Output() abrirLimitesSeguridad = new EventEmitter<void>();
+  /** Abre la misma ventana PUNTOS administrada por Menu, sin modificar la seleccion. */
+  @Output() abrirPuntos = new EventEmitter<void>();
+
+  /** Cierra exclusivamente el menu contextual y delega la apertura al contenedor. */
+  solicitarPuntos(): void {
+    this.contextId.set(null);
+    this.abrirPuntos.emit();
+  }
 
   /** Cierra el menu de pieza y delega exclusivamente la apertura al contenedor Vulcano. */
   solicitarLimitesSeguridad(): void {
@@ -441,6 +584,7 @@ effect((onCleanup) => {
   }
 
   ngAfterViewInit(): void {
+    this.puntosHojaInicializada.set(true);
     // Nonvisual renderers (including jsdom) may not provide ResizeObserver.
     if (typeof ResizeObserver !== 'undefined') {
       this.observer = new ResizeObserver(([entry]) => {
@@ -1488,10 +1632,10 @@ centrarHojaEnCoordenadas(
   latitud: number
 ): void {
 
-  const punto = this.convertirWgs84AOrigenNacional(
-    longitud,
-    latitud
-  );
+ const punto = this.convertirWgs84AOrigenNacional(
+  longitud,
+  latitud
+);
 
   if (!punto) {
     console.error(
@@ -2155,6 +2299,58 @@ actualizarEstadoPantallaCompleta(): void {
   );
 }
 
+centrarEnPoligonoLimites(): void {
+  const poligono = this.poligonoLimitesActual();
+  if (!poligono) return;
 
+  const vertices = poligono.geometry.coordinates[0]
+    .map(([longitud, latitud]) =>
+      this.convertirWgs84AOrigenNacional(longitud, latitud)
+    )
+    .filter((p): p is LocalPoint => p !== null);
 
+  if (vertices.length < 3) return;
+
+  const xs = vertices.map(p => p.x);
+  const ys = vertices.map(p => p.y);
+
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  this.center.set({
+    x: (minX + maxX) / 2,
+    y: (minY + maxY) / 2
+  });
+
+  const ancho = Math.max(maxX - minX, 1);
+  const alto = Math.max(maxY - minY, 1);
+  const viewport = this.viewport();
+
+  const escalaDeseada = Math.min(
+    viewport.width * 0.8 / ancho,
+    viewport.height * 0.8 / alto
+  );
+
+  const escalaBase = Math.min(
+    viewport.width / 420,
+    viewport.height / 260
+  );
+
+  this.zoom.set(
+    Math.max(
+      this.minZoom,
+      Math.min(this.maxZoom, escalaDeseada / escalaBase)
+    )
+  );
+}
+diagnosticarPoligono(): void {
+  console.log('[HOJA] Polígono:', this.poligonoLimitesActual());
+  console.log('[HOJA] Vértices SVG:', this.verticesLimitesSeguridad());
+  console.log('[HOJA] Puntos SVG:', this.puntosSvgLimites());
+  console.log('[HOJA] Centro:', this.center());
+  console.log('[HOJA] Zoom:', this.zoom());
+  console.log('[HOJA] Viewport:', this.viewport());
+}
 }

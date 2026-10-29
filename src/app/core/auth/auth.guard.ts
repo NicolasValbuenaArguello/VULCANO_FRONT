@@ -7,12 +7,16 @@ import { APP_PATHS } from '../constants/routes.constants';
 // AUTH GUARD
 // Protege rutas que requieren una sesion valida.
 // ======================================================
-/** @returns true con token local vigente; UrlTree a login en otro caso. No controla permisos por funcion. */
-export const authGuard: CanActivateFn = () => {
+/** Conserva la URL solicitada para continuar tras login, sin conceder acceso sin token vigente.
+ * @param _route Ruta evaluada por Angular.
+ * @param state Incluye URL interna completa (consulta y fragmento).
+ * @returns true con sesion vigente o UrlTree al login; no controla permisos por funcion.
+ * Depende de AuthService y Router; no intenta refresh sin contrato del backend. */
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   return authService.isAuthenticated()
     ? true
-    : router.createUrlTree([APP_PATHS.LOGIN]);
+    : router.createUrlTree([APP_PATHS.LOGIN], { queryParams: { returnUrl: state.url } });
 };

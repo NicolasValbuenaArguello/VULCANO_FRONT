@@ -13,40 +13,36 @@
   </header>
 
   <div class="panel-grid">
-    <section
-  #hojaCompleta
-  class="panel plotting-panel window-workspace-host"
-  aria-label="Hoja milimetrada local de demostración">
+    <section #hojaCompleta class="panel plotting-panel window-workspace-host"
+      aria-label="Hoja milimetrada local de demostración">
       <app-window-workspace #panelWorkspace></app-window-workspace>
       <!-- Mantiene el indicador del informe dentro del elemento fullscreen. -->
       <ng-content select="[indicadorInforme]"></ng-content>
       <header class="coordinate-header">
+        @if (puntosGeneralesLocales().length) {
+          <button type="button" class="btn-hoja-fullscreen" (click)="centrarPuntosGenerales()">VER PUNTOS</button>
+        }
         <span>PLANO CARTESIANO · X / Y · UNIDADES LOCALES</span>
         <span>ZOOM {{ zoomPercent() }} % <span class="badge">VISTA DEMOSTRATIVA</span></span>
-        
-<button
-  type="button"
-  class="btn-hoja-fullscreen"
-  (click)="alternarPantallaCompleta()"
-  [attr.aria-label]="pantallaCompleta()
+
+        <button type="button" class="btn-hoja-fullscreen" (click)="alternarPantallaCompleta()" [attr.aria-label]="pantallaCompleta()
     ? 'Salir de pantalla completa'
-    : 'Activar pantalla completa'"
-  [title]="pantallaCompleta()
+    : 'Activar pantalla completa'" [title]="pantallaCompleta()
     ? 'Salir de pantalla completa'
     : 'Pantalla completa'">
 
-  @if (pantallaCompleta()) {
-    <span>⛶ SALIR DE PANTALLA COMPLETA</span>
-  } @else {
-    <span>⛶ PANTALLA COMPLETA</span>
-  }
+          @if (pantallaCompleta()) {
+          <span>⛶ SALIR DE PANTALLA COMPLETA</span>
+          } @else {
+          <span>⛶ PANTALLA COMPLETA</span>
+          }
 
-</button>
+        </button>
 
       </header>
       <div #plotArea class="plot-area interactive-plane">
         <div class="demo-state" role="status">
-          @if (!elements.length) { <span>Sin registros para mostrar.</span> }
+          @if (!elements.length && !puntosGeneralesLocales().length) { <span>Sin registros para mostrar.</span> }
         </div>
         <svg #localPlane class="coordinate-plot" [class.is-dragging]="dragging()"
           [attr.viewBox]="'0 0 ' + viewport().width + ' ' + viewport().height" role="group"
@@ -87,31 +83,61 @@
                 @for (reference of referenciasLatitud(); track reference.pixel) {
                 <text class="geographic-axis-label" x="8" [attr.y]="reference.pixel - 12">{{ reference.label }}</text>
                 }
+
           </g>
-          
-<!-- ========================================= -->
-<!-- CAPA DE CURVAS DE NIVEL                   -->
-<!-- ========================================= -->
+<!-- CAPA INDEPENDIENTE DE LÍMITES -->
+<g class="limites-seguridad-layer"
+   pointer-events="none">
 
-<g
-  class="curvas-nivel-layer"
-  aria-label="Curvas de nivel"
-  pointer-events="none">
-
-  @for (curva of curvasNivelPantalla(); track curva.id) {
-
-    <polyline
-      [attr.points]="curva.puntos"
-      [class.curva-principal]="curva.principal"
-      [class.curva-secundaria]="!curva.principal"
-      fill="none" />
-
+  @if (puntosSvgLimites()) {
+    <polygon
+      [attr.points]="puntosSvgLimites()"
+      [attr.fill]="poligonoLimitesActual()?.properties?.estilo?.colorRelleno || '#ffc000'"
+      [attr.fill-opacity]="poligonoLimitesActual()?.properties?.estilo?.opacidadRelleno ?? 0.2"
+      [attr.stroke]="poligonoLimitesActual()?.properties?.estilo?.colorLinea || '#ff0000'"
+      [attr.stroke-width]="poligonoLimitesActual()?.properties?.estilo?.grosorLinea ?? 3"
+      stroke-linejoin="round">
+    </polygon>
   }
 
 </g>
+          <!-- ========================================= -->
+          <!-- CAPA DE CURVAS DE NIVEL                   -->
+          <!-- ========================================= -->
+
+          <g class="curvas-nivel-layer" aria-label="Curvas de nivel" pointer-events="none">
+
+            @for (curva of curvasNivelPantalla(); track curva.id) {
+
+            <polyline [attr.points]="curva.puntos" [class.curva-principal]="curva.principal"
+              [class.curva-secundaria]="!curva.principal" fill="none" />
+
+            }
+
+          </g>
 
 
 
+          <!-- Geometrias propias de PUNTOS, sin participar en seleccion/proyeccion operativa. -->
+          <g class="puntos-generales-circulos" pointer-events="none" aria-label="Círculos de puntos geográficos">
+            @for (p of puntosGeneralesPantalla(); track p.id) {
+              @if (p.points) {
+                <polygon [attr.data-point-id]="p.id" [attr.points]="p.points"
+                  [attr.fill]="p.properties?.['relleno']" [attr.fill-opacity]="p.properties?.['opacidad']"
+                  [attr.stroke]="p.properties?.['linea']" [attr.stroke-width]="p.properties?.['grosor']" />
+              }
+            }
+          </g>
+          <g class="puntos-generales-marcadores" pointer-events="none" aria-label="Puntos geográficos registrados">
+            @for (p of puntosGeneralesPantalla(); track p.id) {
+              <g [attr.data-point-id]="p.id">
+                <circle [attr.cx]="p.screen.x" [attr.cy]="p.screen.y" [attr.r]="p.properties?.['tamano']"
+                  [attr.fill]="p.properties?.['marcador']" stroke="#ffffff" stroke-width="2" />
+                <text [attr.x]="p.screen.x + 12" [attr.y]="p.screen.y - 10" fill="#dce7d0" stroke="#071007"
+                  stroke-width="3" paint-order="stroke" font-size="12">{{ p.nombre }}</text>
+              </g>
+            }
+          </g>
           @if (lineaFijada(); as linea) {
           <line [attr.x1]="linea.origen.x" [attr.y1]="linea.origen.y" [attr.x2]="linea.destino.x"
             [attr.y2]="linea.destino.y" stroke="#ff5d4d" stroke-width="2" stroke-dasharray="7 4"
@@ -168,6 +194,7 @@
           <button type="button" (click)="abrirVentanaProyectar($event)">Proyectar</button>
           <button type="button" (click)="fijarElemento()">Fijar</button>
           <button type="button" (click)="solicitarLimitesSeguridad()">Límites de seguridad</button>
+          <button type="button" (click)="solicitarPuntos()">Puntos</button>
         </div>
         }
         @if (etiquetaRelacion(); as etiqueta) {
@@ -198,8 +225,8 @@
         </aside>
         }
         @if (elementoProyectar(); as element) {
-        <div class="project-modal-backdrop" [appMapActionPortal]="proyeccionMapaHost()" (click)="cerrarVentanaProyectar($event)"
-          (pointerdown)="$event.stopPropagation()">
+        <div class="project-modal-backdrop" [appMapActionPortal]="proyeccionMapaHost()"
+          (click)="cerrarVentanaProyectar($event)" (pointerdown)="$event.stopPropagation()">
           <section class="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title"
             [style.transform]="'translate(' + modalProyectarPosicion().x + 'px, ' + modalProyectarPosicion().y + 'px)'"
             (click)="$event.stopPropagation()">
@@ -333,92 +360,90 @@
           <button type="button" aria-label="Acercar" title="Acercar" [disabled]="zoom() >= maxZoom"
             (click)="zoomBy(1.25)">+</button>
 
-          
 
-
-
-<!-- ========================================= -->
-<!-- CONTROLES DE CURVAS DE NIVEL              -->
-<!-- ========================================= -->
-<button type="button" (click)="abrirGraficar.emit()">GRAFICAR</button>
-<button type="button" [disabled]="generandoInforme" (click)="informeSolicitado.emit()">INFORME</button>
-
-<button
+<!-- <button
   type="button"
-  [disabled]="cargandoCurvas()"
-  (click)="cargarCurvasNivel()">
-
-  {{
-    cargandoCurvas()
-      ? 'CARGANDO...'
-      : curvasConsultadas()
-        ? 'ACTUALIZAR CURVAS'
-        : 'CARGAR CURVAS'
-  }}
-
-</button>
-
-<button
-  type="button"
-  [disabled]="!curvasConsultadas()"
-  (click)="alternarVisibilidadCurvas()">
-
-  {{
-    mostrarCurvasNivel()
-      ? 'OCULTAR CURVAS'
-      : 'MOSTRAR CURVAS'
-  }}
-
-</button>
-
-<button
-  type="button"
-  [disabled]="!curvasConsultadas() || cargandoCurvas()"
-  (click)="limpiarCurvasNivel()">
-
-  LIMPIAR CURVAS
-
+  [disabled]="!poligonoLimitesActual()"
+  (click)="centrarEnPoligonoLimites()"
+  title="Centrar hoja en límites de seguridad">
+  CENTRAR LÍMITES
 </button>
 <button
   type="button"
-  class="btn-curvas-automaticas"
-  [class.activo]="curvasAutomaticas()"
-  (click)="alternarCurvasAutomaticas()"
-  [attr.aria-pressed]="curvasAutomaticas()"
->
-  {{ curvasAutomaticas()
-      ? '● CURVAS AUTO: ON'
-      : '○ CURVAS AUTO: OFF'
-  }}
-</button>
-<details class="window-workspace-launcher" #panelLauncher (toggle)="panelLauncher.open">
-  <summary role="button" [attr.aria-expanded]="panelLauncher.open">{{ panelLauncher.open ? '▾' : '▸' }} PANELES ({{ panelWorkspace.manager.floating().length }})</summary>
-  <div>
-    @for (window of panelWorkspace.manager.windows(); track window.id) {
-      <button type="button" (click)="panelWorkspace.activate(window.id, panelLauncher)">{{ window.title }}</button>
-    }
-  </div>
-</details>
+  (click)="diagnosticarPoligono()">
+  DIAGNÓSTICO
+</button> -->
+
+          <!-- ========================================= -->
+          <!-- CONTROLES DE CURVAS DE NIVEL              -->
+          <!-- ========================================= -->
+          <button type="button" (click)="abrirGraficar.emit()">GRAFICAR</button>
+          <button type="button" [disabled]="generandoInforme" (click)="informeSolicitado.emit()">INFORME</button>
+
+          <button type="button" [disabled]="cargandoCurvas()" (click)="cargarCurvasNivel()">
+
+            {{
+            cargandoCurvas()
+            ? 'CARGANDO...'
+            : curvasConsultadas()
+            ? 'ACTUALIZAR CURVAS'
+            : 'CARGAR CURVAS'
+            }}
+
+          </button>
+
+          <button type="button" [disabled]="!curvasConsultadas()" (click)="alternarVisibilidadCurvas()">
+
+            {{
+            mostrarCurvasNivel()
+            ? 'OCULTAR CURVAS'
+            : 'MOSTRAR CURVAS'
+            }}
+
+          </button>
+
+          <button type="button" [disabled]="!curvasConsultadas() || cargandoCurvas()" (click)="limpiarCurvasNivel()">
+
+            LIMPIAR CURVAS
+
+          </button>
+          <button type="button" class="btn-curvas-automaticas" [class.activo]="curvasAutomaticas()"
+            (click)="alternarCurvasAutomaticas()" [attr.aria-pressed]="curvasAutomaticas()">
+            {{ curvasAutomaticas()
+            ? '● CURVAS AUTO: ON'
+            : '○ CURVAS AUTO: OFF'
+            }}
+          </button>
+          <details class="window-workspace-launcher" #panelLauncher (toggle)="panelLauncher.open">
+            <summary role="button" [attr.aria-expanded]="panelLauncher.open">{{ panelLauncher.open ? '▾' : '▸' }}
+              PANELES ({{ panelWorkspace.manager.floating().length }})</summary>
+            <div>
+              @for (window of panelWorkspace.manager.windows(); track window.id) {
+              <button type="button" (click)="panelWorkspace.activate(window.id, panelLauncher)">{{ window.title
+                }}</button>
+              }
+            </div>
+          </details>
 
         </div>
         <div class="local-plane-note">
           <span>Coordenadas locales de demostración · sin referencia geográfica</span>
           <strong role="status">{{ selectedId() ? 'Elemento seleccionado' : '' }}</strong>
         </div>
-        
-@if (zonaCurvasDesactualizada()) {
-  <div class="curvas-aviso" role="status">
-    La zona visible ha cambiado.
-    Presione ACTUALIZAR CURVAS
-    para consultar el relieve.
-  </div>
-}
 
-@if (errorCurvas(); as error) {
-  <div class="curvas-aviso" role="alert">
-    {{ error }}
-  </div>
-}
+        @if (zonaCurvasDesactualizada()) {
+        <div class="curvas-aviso" role="status">
+          La zona visible ha cambiado.
+          Presione ACTUALIZAR CURVAS
+          para consultar el relieve.
+        </div>
+        }
+
+        @if (errorCurvas(); as error) {
+        <div class="curvas-aviso" role="alert">
+          {{ error }}
+        </div>
+        }
 
       </footer>
     </section>
@@ -477,7 +502,8 @@
         </div>
       </div>
       <div class="orientation-separator" aria-hidden="true"></div>
-      <div class="orientation-row orientation-row--pieza" appFloatingPanel="piece" windowTitle="Orientación de pieza" [windowMinWidth]="380" [windowMinHeight]="260">
+      <div class="orientation-row orientation-row--pieza" appFloatingPanel="piece" windowTitle="Orientación de pieza"
+        [windowMinWidth]="380" [windowMinHeight]="260">
         <header class="panel-heading panel-heading--sub">
           <h3>ORIENTACIÓN PIEZA</h3>
         </header>
@@ -630,7 +656,8 @@
       </footer>
     </section>
 
-    <section class="panel trajectory-panel" aria-labelledby="hm-trajectory-title" appFloatingPanel="profile" windowTitle="Perfil de trayectoria balística" [windowMinWidth]="380" [windowMinHeight]="280">
+    <section class="panel trajectory-panel" aria-labelledby="hm-trajectory-title" appFloatingPanel="profile"
+      windowTitle="Perfil de trayectoria balística" [windowMinWidth]="380" [windowMinHeight]="280">
       <header class="panel-heading trajectory-heading">
         <h3 id="hm-trajectory-title"><i class="red-square" aria-hidden="true"></i> PERFIL DE TRAYECTORIA BALÍSTICA</h3>
         <div class="trajectory-metadata"><span>{{ tieneRelacion() ? 'APOGEO: CALCULADO' : 'FIJE DOS PUNTOS PARA CALCULAR
@@ -730,7 +757,8 @@
           [DISPARO]</span><span>T+VÉRTICE</span><span>T+IMPACTO</span></footer> }
     </section>
 
-    <section class="panel data-panel" aria-labelledby="hm-data-title" appFloatingPanel="firing-data" windowTitle="Datos de tiro">
+    <section class="panel data-panel" aria-labelledby="hm-data-title" appFloatingPanel="firing-data"
+      windowTitle="Datos de tiro">
       <header class="panel-heading">
         <h3 id="hm-data-title">DATOS DE TIRO</h3><span class="badge">{{ simulacionTrayectoria ? 'SIMULACIÓN' : 'SIN
           DATOS' }}</span>

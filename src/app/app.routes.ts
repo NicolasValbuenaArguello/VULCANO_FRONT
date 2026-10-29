@@ -20,6 +20,7 @@ export const routes: Routes = [
     component: AppShell,
     canActivateChild: [authGuard],
     children: [
+      { path: 'gis-poligonos', loadComponent: () => import('./pages/gis-poligonos/gis-poligonos').then(m => m.GisPoligonos) },
       {
         path: '',
         pathMatch: 'full',

@@ -1,0 +1,9 @@
+{
+  "poligonos3d": 2,
+  "fuenteCargada": true,
+  "nombre": true,
+  "leaflet": 1,
+  "canvas3d": 1,
+  "etiquetas3d": 1,
+  "estado": "ARCHIVO GIS ACTUALIZADO"
+}

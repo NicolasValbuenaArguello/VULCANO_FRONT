@@ -41,10 +41,8 @@ export class ApiConfigService {
   /** @param url Destino HTTP.
    * @returns Si coincide origen y limite de ruta de una base autorizada. */
   isBackendUrl(url: string): boolean {
-    const candidates = this.getBackendBases();
-    return candidates.some((baseUrl) => this.matchesBaseUrl(url, baseUrl));
+    return this.getBackendBases().some(baseUrl => this.matchesBaseUrl(url, baseUrl));
   }
-
   isAuthEndpoint(url: string): boolean {
     return [this.loginUrl, this.logoutUrl, this.refreshTokenUrl].some((endpoint) =>
       this.matchesBaseUrl(url, endpoint),
@@ -68,7 +66,9 @@ export class ApiConfigService {
 
   private getBackendBases(): string[] {
     const map = this.getBackendMap();
-    return [map.auth, map.vulcano, map.usuarios, map.archivos, map.operaciones, environment.api.auth]
+    // Solo routers GIS protegidos del mismo origen; no autoriza todo /api ni URLs GIS externas.
+    return [map.auth, map.vulcano, map.usuarios, map.archivos, map.operaciones, environment.api.auth,
+      '/api/coordenadas/limites-seguridad', '/api/coordenadas/puntos']
       .filter((value): value is string => !!value?.trim())
       .map((value) => value.trim());
   }

@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Menu } from './menu';
 import { By } from '@angular/platform-browser';
 import { Graficar } from '../graficar/graficar';
+import { VentanaLimitesSeguridad } from '../ventana-limites-seguridad/ventana-limites-seguridad';
 
 describe('Menu', () => {
   let component: Menu;
@@ -38,6 +39,82 @@ describe('Menu', () => {
     host.querySelector('[title="Cerrar"]').click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-ventana-sistemas-artilleria')).toBeNull();
+  });
+
+  it.each([1, 3])('reopens a new polygon empty after %s vertices despite the retained map coordinate', async count => {
+    component.coordenadaMapaSeleccionada = { latitud: 4.5, longitud: -74.25 };
+    component.openLimitesWindow();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const getWindow = () => fixture.debugElement.query(By.directive(VentanaLimitesSeguridad));
+    const form = getWindow().componentInstance as VentanaLimitesSeguridad;
+    const assertEmpty = () => {
+      const debug = getWindow();
+      const current = debug.componentInstance as VentanaLimitesSeguridad;
+      expect(current.vertices).toEqual([]);
+      expect(current.nombrePoligono).toBe('');
+      expect(current.indiceEdicion).toBeNull();
+      expect(current.mensajeEstado).toBe('LISTO PARA AGREGAR PUNTOS');
+      expect(debug.nativeElement.querySelector('.limits-viewer-actions').textContent).toContain('0 PUNTOS');
+      expect(debug.nativeElement.textContent).toContain('0 VÉRTICES');
+      expect(debug.nativeElement.querySelectorAll('svg circle, svg text, svg polygon, svg polyline')).toHaveLength(0);
+    };
+    assertEmpty();
+    form.nombrePoligono = 'Borrador anterior';
+    for (let i = 0; i < count; i++) {
+      form.latGrados = 4 + i;
+      getWindow().nativeElement.querySelector('.limits-panel-heading .limits-btn-blue').click();
+    }
+    fixture.detectChanges();
+    expect(form.vertices).toHaveLength(count);
+    expect(getWindow().nativeElement.querySelectorAll('svg circle')).toHaveLength(count);
+    getWindow().nativeElement.querySelector('[title="Cerrar"]').click();
+    fixture.detectChanges();
+    expect(getWindow()).toBeNull();
+    component.openLimitesWindow();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(getWindow().componentInstance).not.toBe(form);
+    assertEmpty();
+    const reopened = getWindow().componentInstance as VentanaLimitesSeguridad;
+    getWindow().nativeElement.querySelector('.limits-panel-heading .limits-btn-blue').click();
+    fixture.detectChanges();
+    expect(reopened.vertices).toHaveLength(1);
+    expect(reopened.vertices[0].id).toBe(1);
+    expect(getWindow().nativeElement.querySelectorAll('svg circle')).toHaveLength(1);
+    TestBed.inject(HttpTestingController).verify();
+  });
+
+  it('preserves a vertex being edited on minimize/maximize and resets only on an explicit new opening', () => {
+    component.openLimitesWindow();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const form = fixture.debugElement.query(By.directive(VentanaLimitesSeguridad)).componentInstance as VentanaLimitesSeguridad;
+    form.latGrados = 4; form.agregarPunto();
+    form.latGrados = 5; form.agregarPunto();
+    form.editarVertice(1);
+    const vertices = structuredClone(form.vertices);
+    const revision = component.limitesNuevaApertura;
+    form.minimize();
+    fixture.detectChanges();
+    component.openLimitesWindow();
+    fixture.detectChanges();
+    form.toggleMaximize(); form.toggleMaximize();
+    fixture.detectChanges();
+    expect(component.limitesNuevaApertura).toBe(revision);
+    expect(form.vertices).toEqual(vertices);
+    expect(form.indiceEdicion).toBe(1);
+    expect(form.latGrados).toBe(5);
+    expect(fixture.nativeElement.querySelectorAll('.limits-viewer svg circle')).toHaveLength(2);
+    // Simula reutilizacion de instancia para una nueva creacion: no depende de ngOnInit.
+    component.limitesNuevaApertura++;
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(form.vertices).toEqual([]);
+    expect(form.geoJSONGenerado).toBeNull();
+    expect(form.indiceEdicion).toBeNull();
+    TestBed.inject(HttpTestingController).verify();
   });
 
   it('shares foreground ordering when opening, selecting and reopening windows', () => {

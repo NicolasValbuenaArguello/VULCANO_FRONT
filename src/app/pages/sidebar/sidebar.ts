@@ -12,7 +12,6 @@ import { APP_PATHS } from '../../core/constants/routes.constants';
 
 export interface MenuItem {
   name: string;
-  action?: 'logout';
   route?: string;
   permiso?: boolean;
   permisoCodigo?: string;
@@ -41,12 +40,6 @@ export class Sidebar {
   readonly authService = inject(AuthService);
 
   menuItems: MenuItem[] = [
-            {
-      name: 'Salir',
-      action: 'logout',
-      permiso: true,
-      permisoCodigo: 'LOGIN',
-    },
     {
       name: 'Home',
       route: APP_PATHS.HOME,

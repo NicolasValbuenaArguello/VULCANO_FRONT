@@ -12,9 +12,23 @@
 </nav>
 
 <div #floatingWindowsHost style="display: contents">
+@if (puntosWindowOpen) {
+  <app-ventana-puntos [zIndex]="puntosWindowZIndex"
+    (activated)="activatePuntosWindow()" (closed)="puntosWindowOpen = false"></app-ventana-puntos>
+}
 @if (limitesWindowOpen) {
-  <app-ventana-limites-seguridad [zIndex]="limitesWindowZIndex"
-    (activated)="activateLimitesWindow()" (closed)="limitesWindowOpen = false"></app-ventana-limites-seguridad>
+  <app-ventana-limites-seguridad
+    [nuevaApertura]="limitesNuevaApertura"
+    [coordenadaMapaSeleccionada]="coordenadaMapaSeleccionada"
+    [capturaCoordenadasActiva]="capturaCoordenadasActiva"
+    [cantidadCapturasVisuales]="cantidadCapturasVisuales"
+    (limpiarCapturaVisual)="limpiarCapturaVisual.emit()"
+    (capturaCoordenadasActivaChange)="capturaCoordenadasActivaChange.emit($event)"
+    [zIndex]="limitesWindowZIndex"
+    (activated)="activateLimitesWindow()"
+    (closed)="closeLimitesWindow()"
+    (poligonoCreado)="poligonoCreado.emit($event)">
+  </app-ventana-limites-seguridad>
 }
 @if (sistemasWindowOpen) {
   <app-ventana-sistemas-artilleria

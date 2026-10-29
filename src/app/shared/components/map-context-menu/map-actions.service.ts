@@ -2,7 +2,7 @@ import { Injectable, NgZone, OnDestroy, inject, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 
 export interface GeographicPoint { latitud: number; longitud: number; }
-export interface MapActionRequest { action: 'graficar' | 'proyectar' | 'limites-seguridad'; point: GeographicPoint; host: HTMLElement; }
+export interface MapActionRequest { action: 'graficar' | 'proyectar' | 'limites-seguridad' | 'puntos'; point: GeographicPoint; host: HTMLElement; }
 
 /** Valida coordenadas geograficas reales sin sustituir puntos invalidos por valores por defecto. */
 export function validGeographicPoint(point: GeographicPoint): boolean {
@@ -46,13 +46,13 @@ export class MapActionsService implements OnDestroy {
     const coordinates = document.createElement('small');
     coordinates.textContent = `${point.latitud.toFixed(6)}, ${point.longitud.toFixed(6)}`;
     menu.append(heading, coordinates);
-    for (const action of ['graficar', 'proyectar', 'limites-seguridad'] as const) {
+    for (const action of ['graficar', 'proyectar', 'limites-seguridad', 'puntos'] as const) {
       const button = document.createElement('button');
       button.type = 'button';
       button.setAttribute('role', 'menuitem');
       const icon = document.createElement('span');
       icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = action === 'graficar' ? '＋' : action === 'proyectar' ? '↗' : '▣';
+      icon.textContent = action === 'graficar' ? '＋' : action === 'proyectar' ? '↗' : action === 'puntos' ? '⊕' : '▣';
       button.append(icon, document.createTextNode(action === 'limites-seguridad' ? 'LÍMITES DE SEGURIDAD' : action.toUpperCase()));
       button.addEventListener('click', () => {
         const selected = this.selectedPoint();
